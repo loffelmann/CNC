@@ -43,3 +43,5 @@ That being said, do whatever you please with my code.
 
 ![A test machine in operation](machine.jpg)
 
+\* The machine is not included in this repo. Also, it was built by somebody else.
+
