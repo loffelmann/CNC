@@ -40,3 +40,6 @@ main goal anyway. Please keep that in mind.
 
 That being said, do whatever you please with my code.
 
+
+![A test machine in operation](machine.jpg)
+
