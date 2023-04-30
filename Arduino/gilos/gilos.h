@@ -1,0 +1,72 @@
+
+// type for move data
+typedef struct {
+  char type;
+  int dx;
+  int dy;
+  int dz;
+  int du;
+  int dv;
+  unsigned char endSpeed;
+} move_t;
+
+// type for serial protocol state
+typedef enum {
+  S_READY,
+
+  S_MOVE_X0,
+  S_MOVE_X1,
+  S_MOVE_Y0,
+  S_MOVE_Y1,
+  S_MOVE_Z0,
+  S_MOVE_Z1,
+  S_MOVE_U0,
+  S_MOVE_U1,
+  S_MOVE_V0,
+  S_MOVE_V1,
+  S_MOVE_SPEED,
+
+  S_MOVE_IGNORE,
+  S_MOVE_IGNORE_X0,
+  S_MOVE_IGNORE_X1,
+  S_MOVE_IGNORE_Y0,
+  S_MOVE_IGNORE_Y1,
+  S_MOVE_IGNORE_Z0,
+  S_MOVE_IGNORE_Z1,
+  S_MOVE_IGNORE_U0,
+  S_MOVE_IGNORE_U1,
+  S_MOVE_IGNORE_V0,
+  S_MOVE_IGNORE_V1,
+  S_MOVE_IGNORE_SPEED,
+
+  S_MOVE_PRIO,
+  S_MOVE_PRIO_X0,
+  S_MOVE_PRIO_X1,
+  S_MOVE_PRIO_Y0,
+  S_MOVE_PRIO_Y1,
+  S_MOVE_PRIO_Z0,
+  S_MOVE_PRIO_Z1,
+  S_MOVE_PRIO_U0,
+  S_MOVE_PRIO_U1,
+  S_MOVE_PRIO_V0,
+  S_MOVE_PRIO_V1,
+  S_MOVE_PRIO_SPEED,
+
+  S_ZERO,
+
+  S_CONFIG,
+  S_CONFIG_FLAGS,
+  S_CONFIG_LOW0,
+  S_CONFIG_LOW1,
+  S_CONFIG_LOW2,
+  S_CONFIG_LOW3,
+  S_CONFIG_HIGH0,
+  S_CONFIG_HIGH1,
+  S_CONFIG_HIGH2,
+  S_CONFIG_HIGH3,
+  S_CONFIG_BACKLASH0,
+  S_CONFIG_BACKLASH1,
+
+  S_TEST_LIMITS,
+
+} serial_t;

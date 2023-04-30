@@ -7,11 +7,14 @@ Not all features are ready. Not all bugs are fixed.
 Supports machines with up to 5 axes (the Java part is internally ready for 6 axes, but my
 Arduino Nano does not have enough pins for that). The controller implements pul+dir
 interface for five motor drivers and five inputs for axis homing sensors. Crash sensors
-not implemented yet, I think (but there is a software limitation of operating area).
+not implemented yet, but there is a software limitation of operating area.
 
 Supported input formats are DXF (which gets translated to a tool path tracing outlines of the
 image in a rather arbitrary order), and IDX (contains just raw binary arrays of coordinates
 for individual axes). Dreaming about supporting g-code one day.
+
+One intended application was a CNC Guilloche machine; That's why there are things named
+"gilos" in the code.
 
 Works with Java 17. Uses following libraries (not included in this repo):
 * [Fazecast jSerialComm](http://fazecast.github.io/jSerialComm/) (serial port)
@@ -22,7 +25,9 @@ Works with Java 17. Uses following libraries (not included in this repo):
 # Contents
 
 **java/**: A GUI program controlling the device over a serial port. Can be compiled with
-*compile.sh* one dir up. Only in Czech now, sorry.
+*compile.sh* one dir up. GUI only in Czech now, sorry.
+
+**Arduino/gilos/**: Firmware for Arduino Nano
 
 
 # License
