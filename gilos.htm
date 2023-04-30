@@ -1,0 +1,675 @@
+<!DOCTYPE HTML>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<head>
+<title>Giloš</title>
+<script type="text/javascript">
+
+let machine = {
+	"osy": {
+		"točna": {
+			"min": 0,
+			"max": 1,
+			"korekce": x => mod(x, 1),
+			"export korekce": x => x,
+		},
+		"kolejnice": {
+			"min": -1,
+			"max": 1,
+			"korekce": x => Math.min(Math.max(x, -1), 1),
+			"export korekce": x => Math.min(Math.max(x, -1), 1),
+		},
+	},
+	"hranice": {
+		"min x": -1,
+		"max x": 1,
+		"min y": -1,
+		"max y": 1,
+	},
+	"poloha": axisPos => [
+		Math.cos(axisPos["točna"]*2*Math.PI) * axisPos["kolejnice"],
+		Math.sin(axisPos["točna"]*2*Math.PI) * axisPos["kolejnice"],
+	],
+};
+
+let functions = {
+	"rovnoměrně": {
+		"parametry": {
+			"od": { "init": 0 },
+			"do": { "init": 1 },
+		},
+		"funkce": (t, param) => t*param["do"] + (1-t)*param["od"],
+	},
+	"tam a zpátky": {
+		"parametry": {
+			"od": { "init": 0 },
+			"do": { "init": 1 },
+			"počet": { "init": 1, "min": 0 },
+			"posun": { "init": 0 },
+			"sklon": { "init": 0 },
+		},
+		"funkce": (t, param) => {
+			let phase = mod(t*param["počet"]-param["posun"], 1);
+			phase = Math.min(phase, 1-phase) * 2;
+			return t*param["sklon"] + phase*param["do"] + (1-phase)*param["od"];
+		},
+	},
+	"sinus": {
+		"parametry": {
+			"od": { "init": 0 },
+			"do": { "init": 1 },
+			"počet": { "init": 1, "min": 0 },
+			"posun": { "init": 0 },
+			"sklon": { "init": 0 },
+		},
+		"funkce": (t, param) => t*param["sklon"]
+		                      + param["od"]
+		                      + (param["do"]-param["od"]) * 0.5 * (Math.sin((t*param["počet"]-param["posun"])*2*Math.PI)+1),
+	},
+};
+
+function mod(a, b){
+	return ((a % b) + b) % b;
+}
+
+function generateVector(machine, pattern, numSamples, drawing=false){
+	let t = Array(numSamples);
+	let x = Array(numSamples);
+	let y = Array(numSamples);
+
+	let axes = {};
+	let axisFunctions = {};
+	let parameters = {};
+	for(let [a, axis] of Object.entries(machine["osy"])){
+		axes[a] = Array(numSamples);
+		let f = functions[pattern[a]["funkce"]];
+		axisFunctions[a] = f["funkce"];
+		parameters[a] = Object.assign({}, pattern[a]["parametry"]);
+		for(let [p, param] of Object.entries(f["parametry"])){
+			if(!(p in parameters[a]))parameters[a][p] = param["init"];
+			if("min" in param)parameters[a][p] = Math.max(parameters[a][p], param["min"]);
+			if("max" in param)parameters[a][p] = Math.min(parameters[a][p], param["max"]);
+		}
+	}
+
+	let axisPos = {};
+	for(let i=0; i<=numSamples; ++i){
+		let tt = i / numSamples;
+		t[i] = tt;
+		for(let [a, axis] of Object.entries(machine["osy"])){
+			axes[a][i] = axisPos[a] = axis[drawing? "korekce" : "export korekce"](axisFunctions[a](tt, parameters[a]));
+		}
+		[x[i], y[i]] = machine["poloha"](axisPos);
+	}
+
+	return { t, x, y, axes };
+}
+
+function optimizeVector(x, y, coef){
+//	return [x, y];
+
+	const maxErrorArea = 0.01;
+
+	let newX = [x[0]];
+	let newY = [y[0]];
+
+	let lastDx = 0;
+	let lastDy = 0;
+	let totalArea = 0;
+	for(let i=1; i<x.length; i++){
+		let dx = x[i] - x[i-1];
+		let dy = y[i] - y[i-1];
+		let area = (lastDx*dy - lastDy*dx) / 2;
+		totalArea += area;
+
+		if(Math.abs(totalArea*coef) <= maxErrorArea){ // merge segment with previous
+			lastDx += dx;
+			lastDy += dy;
+		}
+		else{
+			newX.push(x[i-1]);
+			newY.push(y[i-1]);
+			lastDx = dx;
+			lastDy = dy;
+			totalArea = 0;
+		}
+	}
+
+	newX.push(x[x.length-1]);
+	newY.push(y[y.length-1]);
+
+	return [newX, newY];
+}
+
+//optimizeVector([0, 1, 1, 2], [0, 0, 1, 1], 1);
+
+function drawFunction(ctx, x, y, box, min=null, max=null){
+	let minX = Math.min(...x);
+	let rangeX = Math.max(...x) - minX;
+	if(rangeX < 1e-6)rangeX = 1;
+	let minY = (min === null)? Math.min(...y) : min;
+	let rangeY = ((max === null)? Math.max(...y) : max) - minY;
+	if(rangeY < 1e-6)rangeY = 1;
+	if(min !== null && max !== null){
+		ctx.fillStyle = "#E0E0E0";
+		ctx.fillRect(box.x, box.y, box.w, box.h);
+	}
+	ctx.beginPath();
+	ctx.moveTo(box.x+(x[0]-minX)/rangeX*box.w, box.y+(1-(y[0]-minY)/rangeY)*box.h);
+	for(let i=1; i<x.length; ++i){
+		ctx.lineTo(box.x+(x[i]-minX)/rangeX*box.w, box.y+(1-(y[i]-minY)/rangeY)*box.h);
+	}
+	ctx.lineEnd = "round";
+	ctx.strokeStyle = "#000";
+	ctx.stroke();
+}
+
+function drawPattern(ctx, x, y, box){
+	let minX = machine["hranice"]["min x"];
+	let rangeX = machine["hranice"]["max x"] - minX;
+	let minY = machine["hranice"]["min y"];
+	let rangeY = machine["hranice"]["max y"] - minY;
+	ctx.beginPath();
+	ctx.moveTo(box.x+(x[0]-minX)/rangeX*box.w, box.y+(1-(y[0]-minY)/rangeY)*box.h);
+	let length = 0;
+	for(let i=1; i<x.length; ++i){
+		length += Math.hypot(x[i]-x[i-1], y[i]-y[i-1])
+		ctx.lineTo(box.x+(x[i]-minX)/rangeX*box.w, box.y+(1-(y[i]-minY)/rangeY)*box.h);
+	}
+	ctx.lineEnd = "round";
+	ctx.strokeStyle = "#000";
+	ctx.stroke();
+
+	return length / rangeX * box.w;
+}
+
+function draw(ctx, pattern, axisNames){
+	ctx.canvas.width += 0;
+	ctx.font = "20px sans-serif";
+	ctx.textAlign = "left";
+	ctx.textBaseline = "bottom";
+
+	let f_height = 70;
+	let f_gap = 30;
+	let rest = Math.min(ctx.canvas.height-axisNames.length*(f_height+f_gap), ctx.canvas.width);
+	ctx.fillStyle = "#FFF";
+	ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height-rest);
+	ctx.strokeStyle = "#F00";
+	ctx.setLineDash([10, 3]);
+	ctx.rect(f_gap-0.5, ctx.canvas.height-rest+f_gap-0.5, rest-2*f_gap+1, rest-2*f_gap+1);
+	ctx.stroke();
+	ctx.setLineDash([]);
+
+	let maxSegment = 5;
+	let maxNumSamples = 100000;
+	let numSamples = 5000;
+	let {t, x, y, axes} = generateVector(machine, pattern, numSamples, true);
+	var {length, minX, maxX, minY, maxY} = drawPattern(ctx, x, y, {
+		x: f_gap,
+		y: ctx.canvas.height-rest+f_gap,
+		w: rest-2*f_gap,
+		h: rest-2*f_gap,
+	});
+	for(let i=0; i<5 && length/numSamples > maxSegment && numSamples < maxNumSamples; i++){
+		numSamples = Math.ceil(Math.min(length/maxSegment*1.5, maxNumSamples));
+		({t, x, y, axes} = generateVector(machine, pattern, numSamples, true));
+		var { length, minX, maxX, minY, maxY } = drawPattern(ctx, x, y, {
+			x: f_gap,
+			y: ctx.canvas.height-rest+f_gap,
+			w: rest-2*f_gap,
+			h: rest-2*f_gap,
+		});
+	}
+	if(length/numSamples > 2*maxSegment)alert("Bacha, rozlišení nestačí");
+
+	let fy = 0;
+	for(let o of axisNames){
+		ctx.fillStyle = "#000";
+		ctx.fillText(o, f_gap, fy+f_gap-1);
+		drawFunction(ctx, t, axes[o], { x: f_gap, y: fy+f_gap, w: ctx.canvas.width-2*f_gap, h: f_height },
+		             machine["osy"][o]["min"], machine["osy"][o]["max"]);
+		fy += f_height + f_gap;
+	}
+
+	return {minX, maxX, minY, maxY, numSamples};
+}
+
+function el(type, attr={}, ...children){
+	let element = document.createElement(type);
+	for(let i in attr){
+		if(i === "style"){
+			for(let j in attr[i])element.style[j] = attr[i][j];
+		}
+		else{
+			element[i] = attr[i];
+		}
+	}
+	for(let c of children){
+		if(typeof(c) === "object" && c){
+			element.appendChild(c);
+		}
+		else{
+			let span = document.createElement("span");
+			span.innerHTML = ""+c;
+			for(let node of Array.from(span.childNodes)){
+				element.appendChild(node);
+			}
+		}
+	}
+	return element;
+}
+
+addEventListener("load", () => {
+	let canvases = document.querySelector("#canvases");
+	let width = canvases.style.pixelWidth = Math.max(innerWidth-300, 500);
+	let height = canvases.style.pixelHeight = Math.max(innerHeight-5, 700);
+
+	let contexts = [];
+	let patterns = [];
+	let backgroundPatterns = [];
+	let patternIndex = -1;
+
+	let sampleCounts = [];
+
+	function addPattern(){
+		patterns.push({});
+		backgroundPatterns.push(true);
+		let ctx = el("canvas", { "width": width, "height": height }).getContext("2d");
+		canvases.appendChild(ctx.canvas);
+		contexts.push(ctx);
+		return patterns.length-1;
+	}
+
+	function removePattern(index){
+		patterns.splice(index, 1);
+		backgroundPatterns.splice(index, 1);
+		canvases.removeChild(contexts[index].canvas);
+		contexts.splice(index, 1);
+		if(patternIndex >= index)switchPattern(patternIndex-1);
+	}
+
+	function switchPattern(index){
+		if(patternIndex < patterns.length){
+			let style = contexts[patternIndex].canvas.style;
+			style.zIndex = 0;
+			style.display = backgroundPatterns[patternIndex]? "" : "none";
+		}
+		patternIndex = index;
+		style = contexts[patternIndex].canvas.style;
+		style.zIndex = 2;
+		style.display = "";
+		drawForm(patternIndex);
+		updateJson();
+		drawList();
+	}
+
+	let axisNames = Object.keys(machine["osy"]);
+	let functionNames = Object.keys(functions);
+	let form = document.querySelector("#formWrapper2");
+	let parameters = {};
+	let noDraw = false;
+
+	function drawForm(index){
+		let pattern = patterns[index];
+		form.innerHTML = "";
+		for(let o of axisNames){
+			if(!(o in parameters))parameters[o] = {};
+			if(o in pattern){
+				if(pattern[o]["funkce"])parameters[o]["funkce"] = pattern[o]["funkce"];
+				Object.assign(parameters[o], pattern[o]["parametry"] || {});
+			}
+
+			let funcSelection = [];
+			for(let f of functionNames)funcSelection.push(el("option", {}, f));
+			let funcForm = el("select", {}, ...funcSelection);
+			if(parameters[o]["funkce"]){
+				funcForm.selectedIndex = functionNames.indexOf(parameters[o]["funkce"]);
+			}
+			let paramForm = el("table", { "id": "parametry_"+o });
+			funcForm.addEventListener("change", () => {
+				let newFunc = funcForm.options[funcForm.selectedIndex].text;
+				pattern[o] = { "funkce": newFunc, "parametry": {} };
+				paramForm.innerHTML = "";
+				for(let [p, param] of Object.entries(functions[newFunc]["parametry"])){
+					if(!(p in parameters[o]))parameters[o][p] = param["init"];
+					pattern[o]["parametry"][p] = parameters[o][p];
+					let inp = el("input", { "type": "number", "value": parameters[o][p] });
+					if("min" in param){
+						inp.setAttribute("min", param["min"]);
+						if(mod(param["min"], 1) != 0)inp.setAttribute("step", 0.1);
+					}
+					if("max" in param)inp.setAttribute("max", param["max"]);
+					inp.addEventListener("change", () => {
+						pattern[o]["parametry"][p] = parameters[o][p] = Number(inp.value);
+						updateJson();
+						let {numSamples} = draw(contexts[index], pattern, axisNames);
+						sampleCounts[index] = numSamples;
+					});
+					paramForm.appendChild(el("tr", {}, el("td", {}, p), el("td", {}, inp)));
+				}
+				if(!noDraw){
+					let {numSamples} = draw(contexts[index], pattern, axisNames);
+					sampleCounts[index] = numSamples;
+					updateJson();
+				}
+			});
+			noDraw = true;
+			funcForm.dispatchEvent(new CustomEvent("change"));
+			noDraw = false;
+
+			form.appendChild(el("div", {},
+				el("h3", {}, o),
+				funcForm,
+				paramForm,
+				el("br"),
+			));
+		}
+	}
+
+	patternIndex = addPattern();
+	drawForm(patternIndex);
+
+	// current pattern form
+
+	let formWrapper = document.querySelector("#formWrapper");
+
+	let jsonInput = el("textarea");
+	function updateJson(){
+		jsonInput.value = JSON.stringify(patterns[patternIndex], null, "  ");
+	}
+	updateJson();
+	jsonInput.addEventListener("change", () => {
+		patterns[patternIndex] = JSON.parse(jsonInput.value);
+		drawForm(patternIndex);
+		let {numSamples} = draw(contexts[patternIndex], patterns[patternIndex], axisNames);
+		sampleCounts[patternIndex] = numSamples;
+	});
+	jsonInput.addEventListener("keydown", ev => {
+		if(ev.key === "Enter"){
+			ev.preventDefault();
+			jsonInput.dispatchEvent(new CustomEvent("change"));
+		}
+	});
+
+	formWrapper.appendChild(el("div", {},
+		el("h3", {}, "celej vzor"),
+		jsonInput,
+	));
+
+	// pattern list
+
+	let list = el("table");
+	function drawList(){
+		list.innerHTML = "";
+		for(let [i, pattern] of patterns.entries()){
+			let radio = el("input", { "type": "radio", "title": "editovat", "name": "výběrVzoru", "checked": i===patternIndex });
+			radio.addEventListener("change", () => {
+				if(radio.checked)switchPattern(i);
+			});
+
+			let display = el("input", { "type": "checkbox", "title": "kreslit i když se needituje", "checked": backgroundPatterns[i] });
+			display.addEventListener("change", () => {
+				if(display.checked){
+					backgroundPatterns[i] = true;
+					contexts[i].canvas.style.display = "";
+				}
+				else{
+					backgroundPatterns[i] = false;
+					contexts[i].canvas.style.display = (i === patternIndex)? "" : "none";
+				}
+			});
+
+			let remove = el("button", { "title": "smazat", "disabled": patterns.length<=1 }, "&nbsp;X&nbsp;");
+			remove.addEventListener("click", () => {
+				if(patterns.length <= 1)return;
+				removePattern(i);
+			});
+
+			list.appendChild(el("tr", {},
+				el("td", {}, radio),
+				el("td", {}, display),
+				el("td", {}, remove),
+			));
+		}
+		let plus = el("button", { "title": "přidat vzor", "style": { "width": "100%" } }, "+");
+		plus.addEventListener("click", () => {
+			switchPattern(addPattern());
+			drawList();
+			let {numSamples} = draw(contexts[patternIndex], patterns[patternIndex], axisNames);
+			sampleCounts[patternIndex] = numSamples;
+		});
+		list.appendChild(el("tr", {}, el("td", { "colSpan": 3 }, plus)));
+	}
+	drawList();
+	formWrapper.appendChild(el("div", {},
+		el("h3", {}, "seznam vzorů"),
+		list,
+	));
+
+	// idx file generation
+
+	function checkValue(value, message){
+		value = Number(value.replace(",", "."));
+		if(!isFinite(value)){
+			alert(message);
+			throw new Error(message);
+		}
+		return value;
+	}
+
+	function checkLimits(low, high, axisName){
+		let error = message => { alert(message); throw new Error(message); };
+		low = checkValue(low, `blbá dolní mez pro ${axisName}"`);
+		high = checkValue(high, `blbá horní mez pro ${axisName}"`);
+//		if(low === high)error(`blbé meze pro ${axisName}`);
+		return [low, high];
+	}
+
+	function downloadVector(x, y, limitsX, limitsY, zHeight_mm, indexZ, name){
+		let buf = new ArrayBuffer((x.length+4)*12+12);
+		let view = new DataView(buf);
+		view.setUint32(0, 0x00000C02); // magic
+		view.setUint32(4, x.length+4); // number of point
+		view.setUint32(8, 3); // number of axes
+
+		let pointIndex = 0;
+		function addPoint(x, y, z_mm){
+			let x_mm = limitsX[0] + (x+1)/2*(limitsX[1]-limitsX[0]);
+			let y_mm = limitsY[0] + (y+1)/2*(limitsY[1]-limitsY[0]);
+			addPoint_mm(x_mm, y_mm, z_mm);
+		}
+		function addPoint_mm(x_mm, y_mm, z_mm){
+			if(indexZ === 0)[x_mm, y_mm, z_mm] = [z_mm, x_mm, y_mm];
+			if(indexZ === 1)[x_mm, y_mm, z_mm] = [x_mm, z_mm, y_mm];
+			console.log([x_mm, y_mm, z_mm]);
+			view.setInt32(pointIndex*12+12, Math.round(x_mm*1000));
+			view.setInt32(pointIndex*12+16, Math.round(y_mm*1000));
+			view.setInt32(pointIndex*12+20, Math.round(z_mm*1000));
+			pointIndex++;
+		}
+
+		addPoint_mm(0, 0, 0); // beginning at zero
+		addPoint_mm(0, 0, zHeight_mm); // raise the thool
+		addPoint(x[0], y[0], zHeight_mm); // move above the first curve point
+		for(let i=0; i<x.length; i++){
+			addPoint(x[i], y[i], 0);
+		}
+		addPoint(x[x.length-1], y[y.length-1], zHeight_mm); // raise at the end
+
+		let blob = new Blob([buf], { type: "application/octet-stream" });
+		let a = document.createElement("a");
+		a.download = name;
+		a.href = window.URL.createObjectURL(blob);
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	}
+
+	// generating YZU idx file
+
+	let railFrom = el("input", { size: 4, value: "-100" });
+	let railTo = el("input", { size: 4, value: "100" });
+	let carouselFrom = el("input", { size: 4, value: "-180", disabled: true });
+	let carouselTo = el("input", { size: 4, value: "180", disabled: true });
+	let downloadYZU = el("button", {}, "stáhnout YZU");
+
+	downloadYZU.addEventListener("click", () => {
+		try{
+			var limitsY = checkLimits(railFrom.value, railTo.value, "Y");
+			var limitsU = [-360, 360];
+			var zHeight_mm = checkValue(zHeight.value, "Blbá výška Z");
+		}
+		catch(e){ return; }
+
+		let {axes} = generateVector(machine, patterns[patternIndex], sampleCounts[patternIndex] || 5000);
+		let [y, u] = optimizeVector(axes["kolejnice"], axes["točna"], Math.abs(limitsY[0]-limitsY[1])*300);
+
+		downloadVector(y, u, limitsY, limitsU, zHeight_mm, 1, "gilos.yzu");
+	});
+
+	// generating XYZ idx file
+
+	let xFrom = el("input", { size: 4, value: "0" });
+	let xTo = el("input", { size: 4, value: "100" });
+	let yFrom = el("input", { size: 4, value: "0" });
+	let yTo = el("input", { size: 4, value: "100" });
+	let downloadXYZ = el("button", {}, "stáhnout XYZ");
+
+	downloadXYZ.addEventListener("click", () => {
+		try{
+			var limitsX = checkLimits(xFrom.value, xTo.value, "X");
+			var limitsY = checkLimits(yFrom.value, yTo.value, "Y");
+			var zHeight_mm = checkValue(zHeight.value, "Blbá výška Z");
+		}
+		catch(e){ return; }
+
+		let {x, y} = generateVector(machine, patterns[patternIndex], sampleCounts[patternIndex] || 5000);
+		[x, y] = optimizeVector(x, y, Math.abs(limitsX[0]-limitsX[1])*Math.abs(limitsY[0]-limitsY[1]));
+
+		downloadVector(x, y, limitsX, limitsY, zHeight_mm, 2, "gilos.xyz");
+	});
+
+	// adding idx form to document
+
+	let zHeight = el("input", { size: 4, value: "10" });
+
+	formWrapper.appendChild(el("div", { id: "export" },
+		el("h3", {}, "export vzoru"),
+
+		el("p", {}, "zvednout Z o&nbsp;", zHeight, "&nbsp;mm"),
+
+		el("div", {}, "Y&nbsp;od&nbsp;"),
+		railFrom,
+		el("div", {}, "&nbsp;do&nbsp;"),
+		railTo,
+		el("div", {}, "&nbsp;mm"),
+		el("div", {}, "U&nbsp;od&nbsp;"),
+		carouselFrom,
+		el("div", {}, "&nbsp;do&nbsp;"),
+		carouselTo,
+		el("div", {}, "&nbsp;°"),
+		downloadYZU,
+
+		el("div", {}, "X&nbsp;od&nbsp;"),
+		xFrom,
+		el("div", {}, "&nbsp;do&nbsp;"),
+		xTo,
+		el("div", {}, "&nbsp;mm"),
+		el("div", {}, "Y&nbsp;od&nbsp;"),
+		yFrom,
+		el("div", {}, "&nbsp;do&nbsp;"),
+		yTo,
+		el("div", {}, "&nbsp;mm"),
+		downloadXYZ,
+	));
+
+	// render current pattern
+
+	switchPattern(patternIndex);
+	let {numSamples} = draw(contexts[patternIndex], patterns[patternIndex], axisNames);
+	sampleCounts[patternIndex] = numSamples;
+});
+
+</script>
+<style>
+
+body {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	font-family: sans-serif;
+}
+
+body > * {
+	display: inline-block;
+}
+
+/* HTML form etc. */
+
+#formWrapper {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	z-index: 2;
+}
+
+h3 {
+	margin-bottom: 5px;
+}
+
+textarea {
+	min-width: 260px;
+	min-height: 200px;
+	margin-right: 10px;
+}
+
+/* export form */
+
+#export {
+	display: grid;
+	grid-template-columns: [vlevo] auto auto auto auto auto [vpravo];
+	padding-right: 1em;
+}
+
+#export h3 {
+	margin-bottom: 0pt;
+}
+
+#export h3, #export button, #export p {
+	grid-column-start: vlevo;
+	grid-column-end: vpravo;
+}
+
+#export button {
+	margin-bottom: 15pt;
+}
+
+/* graphics area */
+
+canvas, #bgScreen {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+}
+
+#bgScreen {
+	background-color: rgba(255, 255, 255, 0.6);
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+</style>
+</head>
+<body>
+	<div id=canvases></div>
+	<div id=bgScreen></div>
+	<div id=formWrapper>
+		<div id=formWrapper2></div>
+	</div>
+</body>
+</html>
+

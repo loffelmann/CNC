@@ -29,6 +29,9 @@ Works with Java 17. Uses following libraries (not included in this repo):
 
 **Arduino/gilos/**: Firmware for Arduino Nano
 
+**gilos.htm**: Example program for IDX data generation. Generates Guilloche-like curves.
+GUI and JSON format in Czech...
+
 
 # License
 
