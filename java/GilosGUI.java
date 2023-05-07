@@ -1460,7 +1460,15 @@ public class GilosGUI extends Frame
 		positionV.setText(Double.isNaN(position[4])? MSG_UNKNOWNPOSITION : String.format("%.2f", position[4]));
 		if((fileSource != null && !fileSource.started())
 			|| (fileSource == null && !waitForFileToolPathEnd)){
-			fileStart = machine.axesToXyz(position);
+			double[] noNaNPosition = new double[]{ // hotfix for YZU machines running with XYZ machine model
+				Double.isNaN(position[0])? 0.0 : position[0],
+				Double.isNaN(position[1])? 0.0 : position[1],
+				Double.isNaN(position[2])? 0.0 : position[2],
+				Double.isNaN(position[3])? 0.0 : position[3],
+				Double.isNaN(position[4])? 0.0 : position[4],
+				Double.isNaN(position[5])? 0.0 : position[5]
+			};
+			fileStart = machine.axesToXyz(noNaNPosition);
 			previewCanvas.setStart(fileStart);
 			updatePreview();
 		}
