@@ -369,38 +369,38 @@ public class GilosDriver implements Runnable {
 		write("C"); // enter config mode
 
 		write("X" + (mc.x.exists()? (xZeroUp? "u" : "d") : "0"));
-		writeLong(mc.x.lowLimitSteps());
-		writeLong(mc.x.highLimitSteps());
+		writeLong((mc.x.inverted()? -1 : 1) * mc.x.lowLimitSteps());
+		writeLong((mc.x.inverted()? -1 : 1) * mc.x.highLimitSteps());
 		writeInt(mc.x.backlashSteps());
 		read("c");
 
 		write("Y" + (mc.y.exists()? (yZeroUp? "u" : "d") : "0"));
-		writeLong(mc.y.lowLimitSteps());
-		writeLong(mc.y.highLimitSteps());
+		writeLong((mc.y.inverted()? -1 : 1) * mc.y.lowLimitSteps());
+		writeLong((mc.y.inverted()? -1 : 1) * mc.y.highLimitSteps());
 		writeInt(mc.y.backlashSteps());
 		read("c");
 
 		write("Z" + (mc.z.exists()? (zZeroUp? "u" : "d") : "0"));
-		writeLong(mc.z.lowLimitSteps());
-		writeLong(mc.z.highLimitSteps());
+		writeLong((mc.z.inverted()? -1 : 1) * mc.z.lowLimitSteps());
+		writeLong((mc.z.inverted()? -1 : 1) * mc.z.highLimitSteps());
 		writeInt(mc.z.backlashSteps());
 		read("c");
 
 		write("U" + (mc.u.exists()? (uZeroUp? "u" : "d") : "0"));
-		writeLong(mc.u.lowLimitSteps());
-		writeLong(mc.u.highLimitSteps());
+		writeLong((mc.u.inverted()? -1 : 1) * mc.u.lowLimitSteps());
+		writeLong((mc.u.inverted()? -1 : 1) * mc.u.highLimitSteps());
 		writeInt(mc.u.backlashSteps());
 		read("c");
 
 		write("V" + (mc.v.exists()? (vZeroUp? "u" : "d") : "0"));
-		writeLong(mc.v.lowLimitSteps());
-		writeLong(mc.v.highLimitSteps());
+		writeLong((mc.v.inverted()? -1 : 1) * mc.v.lowLimitSteps());
+		writeLong((mc.v.inverted()? -1 : 1) * mc.v.highLimitSteps());
 		writeInt(mc.v.backlashSteps());
 		read("c");
 
 		write("W" + (mc.w.exists()? (wZeroUp? "u" : "d") : "0"));
-		writeLong(mc.w.lowLimitSteps());
-		writeLong(mc.w.highLimitSteps());
+		writeLong((mc.w.inverted()? -1 : 1) * mc.w.lowLimitSteps());
+		writeLong((mc.w.inverted()? -1 : 1) * mc.w.highLimitSteps());
 		writeInt(mc.w.backlashSteps());
 		read("c");
 
