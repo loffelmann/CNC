@@ -27,7 +27,7 @@ public class GilosDriver implements Runnable {
 	// misc constants
 	private static final byte SPEED_FULL = 100;
 	private static final byte SPEED_LOW = 1;
-	private static final double ACCEL_DISTANCE = 3.0;
+	public static final double ACCEL_DISTANCE = 3.0;
 
 	private static final long TIMEOUT_BLINK = 10000;
 	private static final long TIMEOUT_ZERO = 3600000;

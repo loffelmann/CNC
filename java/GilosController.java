@@ -355,13 +355,8 @@ public class GilosController implements ActionListener {
 		double distance = startDistance;
 		zeroDistances.add(distance);
 
-		double lastDx = 0;
-		double lastDy = 0;
-		double lastDz = 0;
-		double lastDu = 0;
-		double lastDv = 0;
-		double lastDw = 0;
-		double lastNorm = 1;
+		var previousSegments = new ArrayList<double[]>();
+		previousSegments.add(new double[]{0, 0, 0, 0, 0, 0, 1});
 
 		double lastNonzeroDx = 0;
 		double lastNonzeroDy = 0;
@@ -388,9 +383,16 @@ public class GilosController implements ActionListener {
 			zero = false;
 
 			// zero at sharp turns
-			cos = (dx*lastDx + dy*lastDy + dz*lastDz + du*lastDu + dv*lastDv + dw*lastDw)
-				/ norm / lastNorm;
-			if(cos < minCos)zero = true;
+			double queueDist = norm;
+			for(double[] prev: previousSegments){
+				cos = (dx*prev[0] + dy*prev[1] + dz*prev[2]
+					 + du*prev[3] + dv*prev[4] + dw*prev[5])
+					/ norm / prev[6];
+				if(cos < minCos){
+					zero = true;
+					queueDist += 2*gilos.ACCEL_DISTANCE; // empty queue
+				}
+			}
 
 			// zero at axis direction change which triggers backlash correction
 			if((dx*lastNonzeroDx < 0 && machineConf.x.backlash() != 0)
@@ -405,13 +407,15 @@ public class GilosController implements ActionListener {
 				zeroDistances.add(distance);
 			}
 
-			lastDx = dx;
-			lastDy = dy;
-			lastDz = dz;
-			lastDu = du;
-			lastDv = dv;
-			lastDw = dw;
-			lastNorm = norm;
+			previousSegments.add(new double[]{dx, dy, dz, du, dv, dw, norm});
+			for(int j=previousSegments.size()-2; j>=0; j--){
+				if(queueDist > gilos.ACCEL_DISTANCE){
+					previousSegments.remove(j);
+				}
+				else{
+					queueDist += previousSegments.get(j)[6];
+				}
+			}
 
 			if(dx != 0)lastNonzeroDx = dx;
 			if(dy != 0)lastNonzeroDy = dy;
