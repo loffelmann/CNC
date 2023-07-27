@@ -1218,7 +1218,7 @@ public class GilosGUI extends Frame
 	public double[][] getPoints(){
 
 		if(fileSource != null){
-			System.out.println("sending points from file");
+			System.out.println("sending points from file "+fileSource.getName());
 			try{
 				double zoom = parseDouble(this.zoom.getText());
 				if(!Double.isFinite(zoom) || zoom <= 0)zoom = 1;

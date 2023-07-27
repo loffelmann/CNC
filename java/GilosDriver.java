@@ -1331,7 +1331,8 @@ public class GilosDriver implements Runnable {
 			machineConf.v.exists()? ((machineConf.v.inverted()? -1 : 1) * m.dv() * part / machineConf.v.stepsPerMm()) : 0,
 			machineConf.w.exists()? ((machineConf.w.inverted()? -1 : 1) * m.dw() * part / machineConf.w.stepsPerMm()) : 0
 		};
-		System.out.println("shifting by "+shift[0]+" "+shift[1]+" "+shift[2]);
+		System.out.println("shifting by "+shift[0]+" "+shift[1]+" "+shift[2]
+		                   +"   "+shift[3]+" "+shift[4]+" "+shift[5]);
 		controller.shiftPosition(shift, m.type() != 'K');
 	}
 

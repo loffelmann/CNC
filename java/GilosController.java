@@ -754,8 +754,16 @@ public class GilosController implements ActionListener {
 				limPosition[i] += shift[i];
 			}
 		}
-		System.out.println("old position "+position[0]+" "+position[1]+" "+position[2]);
+		System.out.println("old position "
+		                         +position[0]+" "+position[1]+" "+position[2]
+		                   +"   "+position[3]+" "+position[4]+" "+position[5]);
 		position = newPos;
+		System.out.println("new position "
+		                         +position[0]+" "+position[1]+" "+position[2]
+		                   +"   "+position[3]+" "+position[4]+" "+position[5]);
+		System.out.println("new limited position "
+		                         +limPosition[0]+" "+limPosition[1]+" "+limPosition[2]
+		                   +"   "+limPosition[3]+" "+limPosition[4]+" "+limPosition[5]);
 		sendPosition();
 	}
 
