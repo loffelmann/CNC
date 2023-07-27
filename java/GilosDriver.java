@@ -20,7 +20,7 @@ import machines.*;
 public class GilosDriver implements Runnable {
 
 	// compatible versions of Arduino firmware
-	private static final String VERSION = "0.23";
+	private static final String VERSION = "0.24";
 	private static final int MIN_FIRMWARE = 6;
 	private static final int MAX_FIRMWARE = 6;
 	private byte firmwareVersion;
@@ -371,38 +371,74 @@ public class GilosDriver implements Runnable {
 		write("C"); // enter config mode
 
 		write("X" + (mc.x.exists()? (xZeroUp? "u" : "d") : "0"));
-		writeLong((mc.x.inverted()? -1 : 1) * mc.x.lowLimitSteps());
-		writeLong((mc.x.inverted()? -1 : 1) * mc.x.highLimitSteps());
+		if(mc.x.inverted()){
+			writeLong(-mc.x.highLimitSteps());
+			writeLong(-mc.x.lowLimitSteps());
+		}
+		else{
+			writeLong(mc.x.lowLimitSteps());
+			writeLong(mc.x.highLimitSteps());
+		}
 		writeInt(mc.x.backlashSteps());
 		read("c");
 
 		write("Y" + (mc.y.exists()? (yZeroUp? "u" : "d") : "0"));
-		writeLong((mc.y.inverted()? -1 : 1) * mc.y.lowLimitSteps());
-		writeLong((mc.y.inverted()? -1 : 1) * mc.y.highLimitSteps());
+		if(mc.y.inverted()){
+			writeLong(-mc.y.highLimitSteps());
+			writeLong(-mc.y.lowLimitSteps());
+		}
+		else{
+			writeLong(mc.y.lowLimitSteps());
+			writeLong(mc.y.highLimitSteps());
+		}
 		writeInt(mc.y.backlashSteps());
 		read("c");
 
 		write("Z" + (mc.z.exists()? (zZeroUp? "u" : "d") : "0"));
-		writeLong((mc.z.inverted()? -1 : 1) * mc.z.lowLimitSteps());
-		writeLong((mc.z.inverted()? -1 : 1) * mc.z.highLimitSteps());
+		if(mc.z.inverted()){
+			writeLong(-mc.z.highLimitSteps());
+			writeLong(-mc.z.lowLimitSteps());
+		}
+		else{
+			writeLong(mc.z.lowLimitSteps());
+			writeLong(mc.z.highLimitSteps());
+		}
 		writeInt(mc.z.backlashSteps());
 		read("c");
 
 		write("U" + (mc.u.exists()? (uZeroUp? "u" : "d") : "0"));
-		writeLong((mc.u.inverted()? -1 : 1) * mc.u.lowLimitSteps());
-		writeLong((mc.u.inverted()? -1 : 1) * mc.u.highLimitSteps());
+		if(mc.u.inverted()){
+			writeLong(-mc.u.highLimitSteps());
+			writeLong(-mc.u.lowLimitSteps());
+		}
+		else{
+			writeLong(mc.u.lowLimitSteps());
+			writeLong(mc.u.highLimitSteps());
+		}
 		writeInt(mc.u.backlashSteps());
 		read("c");
 
 		write("V" + (mc.v.exists()? (vZeroUp? "u" : "d") : "0"));
-		writeLong((mc.v.inverted()? -1 : 1) * mc.v.lowLimitSteps());
-		writeLong((mc.v.inverted()? -1 : 1) * mc.v.highLimitSteps());
+		if(mc.v.inverted()){
+			writeLong(-mc.v.highLimitSteps());
+			writeLong(-mc.v.lowLimitSteps());
+		}
+		else{
+			writeLong(mc.v.lowLimitSteps());
+			writeLong(mc.v.highLimitSteps());
+		}
 		writeInt(mc.v.backlashSteps());
 		read("c");
 
 		write("W" + (mc.w.exists()? (wZeroUp? "u" : "d") : "0"));
-		writeLong((mc.w.inverted()? -1 : 1) * mc.w.lowLimitSteps());
-		writeLong((mc.w.inverted()? -1 : 1) * mc.w.highLimitSteps());
+		if(mc.w.inverted()){
+			writeLong(-mc.w.highLimitSteps());
+			writeLong(-mc.w.lowLimitSteps());
+		}
+		else{
+			writeLong(mc.w.lowLimitSteps());
+			writeLong(mc.w.highLimitSteps());
+		}
 		writeInt(mc.w.backlashSteps());
 		read("c");
 

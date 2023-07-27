@@ -112,7 +112,7 @@ public class AxisConfig{
 	}
 	public int lowLimitSteps(){
 		if(lowLimit == null || lowLimit.isNaN())return Integer.MIN_VALUE;
-		else return (int)Math.round(lowLimit * stepsPerMm * (inverted?-1:1));
+		else return (int)Math.round(lowLimit * stepsPerMm);
 	}
 
 	public Double highLimit(){
@@ -124,7 +124,7 @@ public class AxisConfig{
 	}
 	public int highLimitSteps(){
 		if(highLimit == null || highLimit.isNaN())return Integer.MIN_VALUE;
-		else return (int)Math.round(highLimit * stepsPerMm * (inverted?-1:1));
+		else return (int)Math.round(highLimit * stepsPerMm);
 	}
 
 	public double backlash(){
