@@ -20,6 +20,7 @@ import machines.*;
 public class GilosDriver implements Runnable {
 
 	// compatible versions of Arduino firmware
+	private static final String VERSION = "0.23";
 	private static final int MIN_FIRMWARE = 6;
 	private static final int MAX_FIRMWARE = 6;
 	private byte firmwareVersion;
@@ -38,6 +39,7 @@ public class GilosDriver implements Runnable {
 	private Thread commandLoop;
 
 	public GilosDriver(GilosController controller, MachineConfig mc){
+		System.out.println("GilosDriver version "+VERSION);
 		this.controller = controller;
 		try{
 			setAxes(mc);
