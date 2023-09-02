@@ -375,14 +375,21 @@ addEventListener("load", () => {
 
 	let jsonInput = el("textarea");
 	function updateJson(){
-		jsonInput.value = JSON.stringify(patterns[patternIndex], null, "  ");
+		jsonInput.value = JSON.stringify(patterns, null, "  ");
 	}
 	updateJson();
 	jsonInput.addEventListener("change", () => {
-		patterns[patternIndex] = JSON.parse(jsonInput.value);
+		let newPatterns = JSON.parse(jsonInput.value);
+		while(patterns.length > newPatterns.length)removePattern(0);
+		while(patterns.length < newPatterns.length)addPattern();
+		patterns.splice(0, patterns.length, ...newPatterns);
+		sampleCounts = [];
+		for(let i=0; i<patterns.length; i++){
+			let {sampleCount} = draw(contexts[i], patterns[i], axisNames);
+			sampleCounts.push(sampleCount);
+		}
+		drawList();
 		drawForm(patternIndex);
-		let {numSamples} = draw(contexts[patternIndex], patterns[patternIndex], axisNames);
-		sampleCounts[patternIndex] = numSamples;
 	});
 	jsonInput.addEventListener("keydown", ev => {
 		if(ev.key === "Enter"){
@@ -392,7 +399,7 @@ addEventListener("load", () => {
 	});
 
 	formWrapper.appendChild(el("div", {},
-		el("h3", {}, "celej vzor"),
+		el("h3", {}, "všechny vzory"),
 		jsonInput,
 	));
 
