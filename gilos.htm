@@ -473,11 +473,16 @@ addEventListener("load", () => {
 		return [low, high];
 	}
 
-	function downloadVector(x, y, limitsX, limitsY, zHeight_mm, indexZ, name){
-		let buf = new ArrayBuffer((x.length+4)*12+12);
+	function downloadVector(xs, ys, limitsX, limitsY, zHeight_mm, indexZ, name){
+		let pointCount = 2;
+		for(let x of xs){
+			pointCount += x.length + 2
+		}
+
+		let buf = new ArrayBuffer(pointCount*12+12);
 		let view = new DataView(buf);
 		view.setUint32(0, 0x00000C02); // magic
-		view.setUint32(4, x.length+4); // number of point
+		view.setUint32(4, pointCount); // number of points
 		view.setUint32(8, 3); // number of axes
 
 		let pointIndex = 0;
@@ -489,7 +494,7 @@ addEventListener("load", () => {
 		function addPoint_mm(x_mm, y_mm, z_mm){
 			if(indexZ === 0)[x_mm, y_mm, z_mm] = [z_mm, x_mm, y_mm];
 			if(indexZ === 1)[x_mm, y_mm, z_mm] = [x_mm, z_mm, y_mm];
-			console.log([x_mm, y_mm, z_mm]);
+//			console.log([x_mm, y_mm, z_mm]);
 			view.setInt32(pointIndex*12+12, Math.round(x_mm*1000));
 			view.setInt32(pointIndex*12+16, Math.round(y_mm*1000));
 			view.setInt32(pointIndex*12+20, Math.round(z_mm*1000));
@@ -497,12 +502,16 @@ addEventListener("load", () => {
 		}
 
 		addPoint_mm(0, 0, 0); // beginning at zero
-		addPoint_mm(0, 0, zHeight_mm); // raise the thool
-		addPoint(x[0], y[0], zHeight_mm); // move above the first curve point
-		for(let i=0; i<x.length; i++){
-			addPoint(x[i], y[i], 0);
+		addPoint_mm(0, 0, zHeight_mm); // raise the tool
+		for(let i=0; i<xs.length; i++){
+			let x = xs[i];
+			let y = ys[i];
+			addPoint(x[0], y[0], zHeight_mm); // move above the first curve point
+			for(let i=0; i<x.length; i++){
+				addPoint(x[i], y[i], 0);
+			}
+			addPoint(x[x.length-1], y[y.length-1], zHeight_mm); // raise at the pattern end
 		}
-		addPoint(x[x.length-1], y[y.length-1], zHeight_mm); // raise at the end
 
 		let blob = new Blob([buf], { type: "application/octet-stream" });
 		let a = document.createElement("a");
@@ -529,10 +538,16 @@ addEventListener("load", () => {
 		}
 		catch(e){ return; }
 
-		let {axes} = generateVector(machine, patterns[patternIndex], sampleCounts[patternIndex] || 5000);
-		let [y, u] = optimizeVector(axes["kolejnice"], axes["točna"], Math.abs(limitsY[0]-limitsY[1])*300);
+		let ys = [];
+		let us = [];
+		for(let i=0; i<patterns.length; i++){
+			let {axes} = generateVector(stroj, patterns[i], sampleCounts[i] || 5000);
+			let [y, u] = optimizeVector(axes["kolejnice"], axes["točna"], Math.abs(limitsY[0]-limitsY[1])*300);
+			ys.push(y);
+			us.push(u);
+		}
 
-		downloadVector(y, u, limitsY, limitsU, zHeight_mm, 1, "gilos.yzu");
+		downloadVector(ys, us, limitsY, limitsU, zHeight_mm, 1, "gilos.yzu");
 	});
 
 	// generating XYZ idx file
@@ -551,10 +566,16 @@ addEventListener("load", () => {
 		}
 		catch(e){ return; }
 
-		let {x, y} = generateVector(machine, patterns[patternIndex], sampleCounts[patternIndex] || 5000);
-		[x, y] = optimizeVector(x, y, Math.abs(limitsX[0]-limitsX[1])*Math.abs(limitsY[0]-limitsY[1]));
+		let xs = [];
+		let ys = [];
+		for(let i=0; i<patterns.length; i++){
+			let {x, y} = generateVector(stroj, patterns[i], sampleCounts[i] || 5000);
+			[x, y] = optimizeVector(x, y, Math.abs(limitsX[0]-limitsX[1])*Math.abs(limitsY[0]-limitsY[1]));
+			xs.push(x);
+			ys.push(y);
+		}
 
-		downloadVector(x, y, limitsX, limitsY, zHeight_mm, 2, "gilos.xyz");
+		downloadVector(xs, ys, limitsX, limitsY, zHeight_mm, 2, "gilos.xyz");
 	});
 
 	// adding idx form to document
