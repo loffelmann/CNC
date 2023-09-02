@@ -329,6 +329,7 @@ addEventListener("load", () => {
 			funcForm.addEventListener("change", () => {
 				let newFunc = funcForm.options[funcForm.selectedIndex].text;
 				pattern[o] = { "funkce": newFunc, "parametry": {} };
+				parameters[o]["funkce"] = newFunc;
 				paramForm.innerHTML = "";
 				for(let [p, param] of Object.entries(functions[newFunc]["parametry"])){
 					if(!(p in parameters[o]))parameters[o][p] = param["init"];
