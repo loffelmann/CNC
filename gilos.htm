@@ -541,7 +541,7 @@ addEventListener("load", () => {
 		let ys = [];
 		let us = [];
 		for(let i=0; i<patterns.length; i++){
-			let {axes} = generateVector(stroj, patterns[i], sampleCounts[i] || 5000);
+			let {axes} = generateVector(machine, patterns[i], sampleCounts[i] || 5000);
 			let [y, u] = optimizeVector(axes["kolejnice"], axes["točna"], Math.abs(limitsY[0]-limitsY[1])*300);
 			ys.push(y);
 			us.push(u);
@@ -569,7 +569,7 @@ addEventListener("load", () => {
 		let xs = [];
 		let ys = [];
 		for(let i=0; i<patterns.length; i++){
-			let {x, y} = generateVector(stroj, patterns[i], sampleCounts[i] || 5000);
+			let {x, y} = generateVector(machine, patterns[i], sampleCounts[i] || 5000);
 			[x, y] = optimizeVector(x, y, Math.abs(limitsX[0]-limitsX[1])*Math.abs(limitsY[0]-limitsY[1]));
 			xs.push(x);
 			ys.push(y);
