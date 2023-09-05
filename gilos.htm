@@ -11,7 +11,8 @@ let machine = {
 			"min": 0,
 			"max": 1,
 			"korekce": x => mod(x, 1),
-			"export korekce": x => x,
+			"export korekce": (x, init=0) => x+init,
+			"get init": Math.round,
 		},
 		"kolejnice": {
 			"min": -1,
@@ -72,7 +73,7 @@ function mod(a, b){
 	return ((a % b) + b) % b;
 }
 
-function generateVector(machine, pattern, numSamples, drawing=false){
+function generateVector(machine, pattern, numSamples, drawing, init={}){
 	let t = Array(numSamples);
 	let x = Array(numSamples);
 	let y = Array(numSamples);
@@ -97,7 +98,7 @@ function generateVector(machine, pattern, numSamples, drawing=false){
 		let tt = i / numSamples;
 		t[i] = tt;
 		for(let [a, axis] of Object.entries(machine["osy"])){
-			axes[a][i] = axisPos[a] = axis[drawing? "korekce" : "export korekce"](axisFunctions[a](tt, parameters[a]));
+			axes[a][i] = axisPos[a] = axis[drawing? "korekce" : "export korekce"](axisFunctions[a](tt, parameters[a]), init[a]);
 		}
 		[x[i], y[i]] = machine["poloha"](axisPos);
 	}
@@ -540,11 +541,17 @@ addEventListener("load", () => {
 
 		let ys = [];
 		let us = [];
+		let init = {};
 		for(let i=0; i<patterns.length; i++){
-			let {axes} = generateVector(machine, patterns[i], sampleCounts[i] || 5000);
+			let {axes} = generateVector(machine, patterns[i], sampleCounts[i] || 5000, false, init);
 			let [y, u] = optimizeVector(axes["kolejnice"], axes["točna"], Math.abs(limitsY[0]-limitsY[1])*300);
 			ys.push(y);
 			us.push(u);
+			for(let a in machine["osy"]){
+				if(machine["osy"][a]["get init"]){
+					init[a] = machine["osy"][a]["get init"](axes[a][axes[a].length-1]);
+				}
+			}
 		}
 
 		downloadVector(ys, us, limitsY, limitsU, zHeight_mm, 1, "gilos.yzu");
@@ -568,11 +575,17 @@ addEventListener("load", () => {
 
 		let xs = [];
 		let ys = [];
+		let init = {};
 		for(let i=0; i<patterns.length; i++){
-			let {x, y} = generateVector(machine, patterns[i], sampleCounts[i] || 5000);
+			let {x, y, axes} = generateVector(machine, patterns[i], sampleCounts[i] || 5000, false, init);
 			[x, y] = optimizeVector(x, y, Math.abs(limitsX[0]-limitsX[1])*Math.abs(limitsY[0]-limitsY[1]));
 			xs.push(x);
 			ys.push(y);
+			for(let a in machine["osy"]){
+				if(machine["osy"][a]["get init"]){
+					init[a] = machine["osy"][a]["get init"](axes[a][axes[a].length-1]);
+				}
+			}
 		}
 
 		downloadVector(xs, ys, limitsX, limitsY, zHeight_mm, 2, "gilos.xyz");
