@@ -162,12 +162,12 @@ public class GilosController implements ActionListener {
 			}
 			updateRunning(true, gui.MODE_RUN);
 			gilos.manualMove(
-				(axis == 0)? direction*30000 : 0,
-				(axis == 1)? direction*30000 : 0,
-				(axis == 2)? direction*30000 : 0,
-				(axis == 3)? direction*30000 : 0,
-				(axis == 4)? direction*30000 : 0,
-				(axis == 5)? direction*30000 : 0,
+				(axis == 0)? direction*16000 : 0,
+				(axis == 1)? direction*16000 : 0,
+				(axis == 2)? direction*16000 : 0,
+				(axis == 3)? direction*16000 : 0,
+				(axis == 4)? direction*16000 : 0,
+				(axis == 5)? direction*16000 : 0,
 				encodeStepRate(gui.getStepRate()),
 				'K'
 			);

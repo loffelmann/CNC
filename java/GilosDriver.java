@@ -20,7 +20,7 @@ import machines.*;
 public class GilosDriver implements Runnable {
 
 	// compatible versions of Arduino firmware
-	private static final String VERSION = "0.24";
+	private static final String VERSION = "0.25";
 	private static final int MIN_FIRMWARE = 6;
 	private static final int MAX_FIRMWARE = 6;
 	private byte firmwareVersion;
@@ -957,12 +957,12 @@ public class GilosDriver implements Runnable {
 	){
 		if(!isConnected())return;
 		System.out.println("addMove--");
-		check((dx > -32768) && (dx < 32768));
-		check((dy > -32768) && (dy < 32768));
-		check((dz > -32768) && (dz < 32768));
-		check((du > -32768) && (du < 32768));
-		check((dv > -32768) && (dv < 32768));
-		check((dw > -32768) && (dw < 32768));
+		check((dx > -16384) && (dx < 16384));
+		check((dy > -16384) && (dy < 16384));
+		check((dz > -16384) && (dz < 16384));
+		check((du > -16384) && (du < 16384));
+		check((dv > -16384) && (dv < 16384));
+		check((dw > -16384) && (dw < 16384));
 		if(type == 'M'){
 			moveBuffer.add(new Move(dx, dy, dz, du, dv, dw, endSpeed, type));
 		}
@@ -1135,8 +1135,8 @@ public class GilosDriver implements Runnable {
 		int dv = getSegmentDx(v, machineConf.v, endPart-startPart) + bufDv;
 		int dw = getSegmentDx(w, machineConf.w, endPart-startPart) + bufDw;
 		int steps = absmax(new int[]{dx, dy, dz, du, dv, dw});
-		if(steps >= 32768){ // splitting long segments
-			int numParts = steps / 30000 + 1;
+		if(steps >= 16000){ // splitting long segments
+			int numParts = steps / 16000 + 1;
 			for(int i=0; i<numParts; i++){
 				addMove(
 					getSegmentDx(x, machineConf.x, (endPart-startPart)/numParts),
@@ -1174,8 +1174,8 @@ public class GilosDriver implements Runnable {
 		if(machineConf.u.inverted())du = -du;
 		if(machineConf.v.inverted())dv = -dv;
 		if(machineConf.w.inverted())dw = -dw;
-		if(steps >= 32768){ // splitting long segments
-			int numParts = steps / 30000 + 1;
+		if(steps >= 16000){ // splitting long segments
+			int numParts = steps / 16000 + 1;
 			for(int i=0; i<numParts; i++){
 				addMove(
 					(int)Math.round(dx / numParts),
