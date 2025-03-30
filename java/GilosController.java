@@ -24,6 +24,8 @@ public class GilosController implements ActionListener {
 	public static final String COMMAND_ZERO = "zero";
 	public static final String COMMAND_RESET = "reset";
 	public static final String COMMAND_TESTLIM = "test lim";
+	public static final String COMMAND_CHUCKOPEN = "chuck open";
+	public static final String COMMAND_CHUCKCLOSE = "chuck close";
 	public static final String COMMAND_BACKSPACE = "backspace";
 	public static final String COMMAND_CLEAR = "clear";
 	public static final String COMMAND_KILL = "kill";
@@ -218,6 +220,16 @@ public class GilosController implements ActionListener {
 				gui.setStatus(gui.MSG_TESTINGLIMITS);
 				updateRunning(true, gui.MODE_LIMIT);
 				gilos.testLimits();
+				break;
+
+			case COMMAND_CHUCKOPEN:
+				// open chuck, release tool
+				gilos.chuckOpen();
+				break;
+
+			case COMMAND_CHUCKCLOSE:
+				// close chuck, grab tool
+				gilos.chuckClose();
 				break;
 
 //			case COMMAND_SETAXES: // happens automatically now

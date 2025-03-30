@@ -20,9 +20,9 @@ import machines.*;
 public class GilosDriver implements Runnable {
 
 	// compatible versions of Arduino firmware
-	private static final String VERSION = "0.25";
+	private static final String VERSION = "0.26";
 	private static final int MIN_FIRMWARE = 6;
-	private static final int MAX_FIRMWARE = 6;
+	private static final int MAX_FIRMWARE = 7;
 	private byte firmwareVersion;
 
 	// misc constants
@@ -531,6 +531,8 @@ public class GilosDriver implements Runnable {
 		CHECK_BUFFER,
 		GO_TO_ZERO,
 		TEST_LIMITS,
+		CHUCK_OPEN,
+		CHUCK_CLOSE,
 	};
 	private ArrayList<Command> commandBuffer;
 	private ArrayList<Move> moveBuffer;
@@ -826,6 +828,22 @@ public class GilosDriver implements Runnable {
 						debugPrintln("processCommand return 11");
 						return true;
 
+					case CHUCK_OPEN:
+						if(firmwareVersion > 6){
+							debugPrintln("driver.processCommand READY: CHUCK_OPEN");
+							write("o");
+						}
+						else debugPrintln("driver.processCommand READY: CHUCK_OPEN not supported by firmware");
+						return true;
+
+					case CHUCK_CLOSE:
+						if(firmwareVersion > 6){
+							debugPrintln("driver.processCommand READY: CHUCK_CLOSE");
+							write("c");
+						}
+						else debugPrintln("driver.processCommand READY: CHUCK_CLOSE not supported by firmware");
+						return true;
+
 					case NO_COMMAND:
 //						debugPrintln("driver.processCommand READY: NO_COMMAND");
 						noCommandCount++;
@@ -943,6 +961,16 @@ public class GilosDriver implements Runnable {
 	public synchronized void testLimits(){
 		if(!isConnected())return;
 		commandBuffer.add(Command.TEST_LIMITS);
+	}
+
+	public synchronized void chuckOpen(){
+		if(!isConnected())return;
+		commandBuffer.add(Command.CHUCK_OPEN);
+	}
+
+	public synchronized void chuckClose(){
+		if(!isConnected())return;
+		commandBuffer.add(Command.CHUCK_CLOSE);
 	}
 
 	/**
