@@ -51,6 +51,8 @@ const byte firmwareVersion = 7;
 
 #define CHUCK -1
 
+#define SPINDLE_SPEED -1
+
 #define ALARM 2
 
 
@@ -378,6 +380,9 @@ void handleSerial(){
           moving = false;
           stopAtLimits = false;
           bresenhamIter = 0;
+#ifdef SUPPORT_SPINDLE_SPEED
+          analogWrite(SPINDLE_SPEED, 0);
+#endif
           delay(5);
         }
         else if(data == 's'){ // buffer status
@@ -459,6 +464,9 @@ void handleSerial(){
         }
         else if(data == 'c'){ // close chuck
           chuckClose();
+        }
+        else if(data == 'r'){ // set spindle speed
+          serialPhase = S_SPINDLE_SPEED;
         }
         else if(data == 'l'){ // blink led
           stop();
@@ -722,6 +730,11 @@ void handleSerial(){
         doPriorityMove = true;
         serialPhase = S_READY;
         Serial.write('G');
+        break;
+
+      case S_SPINDLE_SPEED:
+        setSpindleSpeed(data);
+        serialPhase = S_READY;
         break;
 
       case S_ZERO: // axis homing
@@ -1258,6 +1271,12 @@ void chuckClose(){
 #endif
 }
 
+void setSpindleSpeed(int pwm){
+#ifdef SUPPORT_SPINDLE_SPEED
+  analogWrite(SPINDLE_SPEED, pwm & 0xFF);
+#endif
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1295,6 +1314,11 @@ void setup(){
 #ifdef SUPPORT_CHUCK
   pinMode(CHUCK, OUTPUT);
   digitalWrite(CHUCK, LOW);
+#endif
+
+#ifdef SUPPORT_SPINDLE_SPEED
+  pinMode(SPINDLE_SPEED, OUTPUT);
+  analogWrite(SPINDLE_SPEED, 0);
 #endif
 
   digitalWrite(LED_BUILTIN, LOW);

@@ -74,6 +74,8 @@ typedef enum {
   S_CONFIG_BACKLASH0,
   S_CONFIG_BACKLASH1,
 
+  S_SPINDLE_SPEED,
+
   S_TEST_LIMITS,
 
 } serial_t;
