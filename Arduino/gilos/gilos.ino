@@ -33,18 +33,21 @@ const byte firmwareVersion = 6;
 #define STEP_Z 8
 #define STEP_U 10
 #define STEP_V 12
+#define STEP_W -1
 
 #define DIR_X 3
 #define DIR_Y 5
 #define DIR_Z 7
 #define DIR_U 9
 #define DIR_V 11
+#define DIR_W -1
 
 #define LIMIT_X A4
 #define LIMIT_Y A3
 #define LIMIT_Z A2
 #define LIMIT_U A1
 #define LIMIT_V A0
+#define LIMIT_W -1
 
 #define ALARM 2
 
@@ -69,24 +72,28 @@ bool yAxisPresent = false;
 bool zAxisPresent = false;
 bool uAxisPresent = false;
 bool vAxisPresent = false;
+bool wAxisPresent = false;
 
 bool xZeroUp = false;
 bool yZeroUp = false;
 bool zZeroUp = false;
 bool uZeroUp = false;
 bool vZeroUp = false;
+bool wZeroUp = false;
 
 bool xStopAtLimit = false;
 bool yStopAtLimit = false;
 bool zStopAtLimit = false;
 bool uStopAtLimit = false;
 bool vStopAtLimit = false;
+bool wStopAtLimit = false;
 
 unsigned int xBacklash = 0;
 unsigned int yBacklash = 0;
 unsigned int zBacklash = 0;
 unsigned int uBacklash = 0;
 unsigned int vBacklash = 0;
+unsigned int wBacklash = 0;
 unsigned int maxBacklash = 0;
 
 long xSetLow = NO_LIMIT;
@@ -94,24 +101,28 @@ long ySetLow = NO_LIMIT;
 long zSetLow = NO_LIMIT;
 long uSetLow = NO_LIMIT;
 long vSetLow = NO_LIMIT;
+long wSetLow = NO_LIMIT;
 
 long xSetHigh = NO_LIMIT;
 long ySetHigh = NO_LIMIT;
 long zSetHigh = NO_LIMIT;
 long uSetHigh = NO_LIMIT;
 long vSetHigh = NO_LIMIT;
+long wSetHigh = NO_LIMIT;
 
 long xLow = NO_LIMIT;
 long yLow = NO_LIMIT;
 long zLow = NO_LIMIT;
 long uLow = NO_LIMIT;
 long vLow = NO_LIMIT;
+long wLow = NO_LIMIT;
 
 long xHigh = NO_LIMIT;
 long yHigh = NO_LIMIT;
 long zHigh = NO_LIMIT;
 long uHigh = NO_LIMIT;
 long vHigh = NO_LIMIT;
+long wHigh = NO_LIMIT;
 
 
 // tracking tool position
@@ -120,11 +131,13 @@ long yPos = 0;
 long zPos = 0;
 long uPos = 0;
 long vPos = 0;
+long wPos = 0;
 long limitedXPos = 0;
 long limitedYPos = 0;
 long limitedZPos = 0;
 long limitedUPos = 0;
 long limitedVPos = 0;
+long limitedWPos = 0;
 bool positionKnown = false;
 
 // state of movement
@@ -144,7 +157,7 @@ const unsigned int fullBufferLength = 60;
 move_t buffer[bufferLength];
 unsigned int currentMove = 0;
 unsigned int stopMove = 0;
-move_t priorityMove = {'N', 0, 0, 0, 0, 0, 0};
+move_t priorityMove = {'N', 0, 0, 0, 0, 0, 0, 0};
 bool doPriorityMove = false;
 
 // state of serial protocol
@@ -159,11 +172,13 @@ void setPositionKnown(bool known){
     zLow = zSetLow;
     uLow = uSetLow;
     vLow = vSetLow;
+    wLow = wSetLow;
     xHigh = xSetHigh;
     yHigh = ySetHigh;
     zHigh = zSetHigh;
     uHigh = uSetHigh;
     vHigh = vSetHigh;
+    wHigh = wSetHigh;
   }
   else{
     xLow = NO_LIMIT;
@@ -171,11 +186,13 @@ void setPositionKnown(bool known){
     zLow = NO_LIMIT;
     uLow = NO_LIMIT;
     vLow = NO_LIMIT;
+    wLow = NO_LIMIT;
     xHigh = NO_LIMIT;
     yHigh = NO_LIMIT;
     zHigh = NO_LIMIT;
     uHigh = NO_LIMIT;
     vHigh = NO_LIMIT;
+    wHigh = NO_LIMIT;
   }
   positionKnown = known;
 }
@@ -227,7 +244,12 @@ void propagateConfig(){
     vBacklash = configBacklash;
   }
   else if(configAxis == 'W'){
-    // not supported
+    wAxisPresent = configPresent;
+    wZeroUp = configZeroUp;
+    wStopAtLimit = configStopAtLimit;
+    wSetLow = configLow;
+    wSetHigh = configHigh;
+    wBacklash = configBacklash;
   }
 }
 
@@ -235,7 +257,7 @@ void propagateConfig(){
 /// Communication //////////////////////////////////////////////////////////////////////////////////
 
 move_t peekBuffer(){
-  if(currentMove == stopMove)return {'M', 0, 0, 0, 0, 0, 0};
+  if(currentMove == stopMove)return {'M', 0, 0, 0, 0, 0, 0, 0};
   return buffer[currentMove];
 }
 
@@ -273,6 +295,8 @@ serial_t getNextMovePhase(serial_t currentPhase){
     case S_MOVE_U1:
       if(vAxisPresent) return S_MOVE_V0;
     case S_MOVE_V1:
+      if(wAxisPresent) return S_MOVE_W0;
+    case S_MOVE_W1:
       return S_MOVE_SPEED;
 
     case S_MOVE_IGNORE: // move data start, ignore
@@ -286,6 +310,8 @@ serial_t getNextMovePhase(serial_t currentPhase){
     case S_MOVE_IGNORE_U1:
       if(vAxisPresent) return S_MOVE_IGNORE_V0;
     case S_MOVE_IGNORE_V1:
+      if(wAxisPresent) return S_MOVE_IGNORE_W0;
+    case S_MOVE_IGNORE_W1:
       return S_MOVE_IGNORE_SPEED;
 
     case S_MOVE_PRIO: // priority move data start
@@ -299,6 +325,8 @@ serial_t getNextMovePhase(serial_t currentPhase){
     case S_MOVE_PRIO_U1:
       if(vAxisPresent) return S_MOVE_PRIO_V0;
     case S_MOVE_PRIO_V1:
+      if(wAxisPresent) return S_MOVE_PRIO_W0;
+    case S_MOVE_PRIO_W1:
       return S_MOVE_PRIO_SPEED;
 
     default:
@@ -361,6 +389,7 @@ void handleSerial(){
             | (zAxisPresent << 2)
             | (uAxisPresent << 3)
             | (vAxisPresent << 4)
+            | (wAxisPresent << 5)
           ));
           Serial.write((byte)( // axis configuration 2
               (xZeroUp << 0)
@@ -368,6 +397,7 @@ void handleSerial(){
             | (zZeroUp << 2)
             | (uZeroUp << 3)
             | (vZeroUp << 4)
+            | (wZeroUp << 5)
           ));
           Serial.write((byte)( // movement state
               (moving << 0)
@@ -389,13 +419,13 @@ void handleSerial(){
             serialPhase = getNextMovePhase(S_MOVE_IGNORE);
           }
           else{
-            buffer[stopMove] = {(char)data, 0, 0, 0, 0, 0, 0};
+            buffer[stopMove] = {(char)data, 0, 0, 0, 0, 0, 0, 0};
             serialPhase = getNextMovePhase(S_READY);
           }
         }
         else if(data == 'N' || data == 'K'){ // numerical move, keyboard move
           serialPhase = getNextMovePhase(S_MOVE_PRIO);
-          priorityMove = {(char)data, 0, 0, 0, 0, 0, 0};
+          priorityMove = {(char)data, 0, 0, 0, 0, 0, 0, 0};
         }
         else if(data == 'B'){ // begin movement
           if(remainingMoves() > 0){
@@ -482,6 +512,14 @@ void handleSerial(){
         buffer[stopMove].dv |= data;
         serialPhase = getNextMovePhase(serialPhase);
         break;
+      case S_MOVE_W0:
+        buffer[stopMove].dw |= data << 8;
+        serialPhase = S_MOVE_W1;
+        break;
+      case S_MOVE_W1:
+        buffer[stopMove].dw |= data;
+        serialPhase = getNextMovePhase(serialPhase);
+        break;
       case S_MOVE_SPEED:
         buffer[stopMove].endSpeed = data;
         stopMove = (stopMove+1) % bufferLength;
@@ -518,6 +556,12 @@ void handleSerial(){
         serialPhase = S_MOVE_IGNORE_V1;
         break;
       case S_MOVE_IGNORE_V1:
+        serialPhase = getNextMovePhase(serialPhase);
+        break;
+      case S_MOVE_IGNORE_W0:
+        serialPhase = S_MOVE_IGNORE_W1;
+        break;
+      case S_MOVE_IGNORE_W1:
         serialPhase = getNextMovePhase(serialPhase);
         break;
       case S_MOVE_IGNORE_SPEED:
@@ -564,6 +608,14 @@ void handleSerial(){
         break;
       case S_MOVE_PRIO_V1:
         priorityMove.dv |= data;
+        serialPhase = getNextMovePhase(serialPhase);
+        break;
+      case S_MOVE_PRIO_W0:
+        priorityMove.dw |= data << 8;
+        serialPhase = S_MOVE_PRIO_W1;
+        break;
+      case S_MOVE_PRIO_W1:
+        priorityMove.dw |= data;
         serialPhase = getNextMovePhase(serialPhase);
         break;
       case S_MOVE_PRIO_SPEED:
@@ -664,22 +716,29 @@ void handleSerial(){
 byte readLimits(){
   byte limit = 0;
 
-//  if(analogRead(LIMIT_X) >= LIMIT_THRESHOLD)limit |= 0b00001;
-//  if(analogRead(LIMIT_Y) >= LIMIT_THRESHOLD)limit |= 0b00010;
-//  if(analogRead(LIMIT_Z) >= LIMIT_THRESHOLD)limit |= 0b00100;
-//  if(analogRead(LIMIT_U) >= LIMIT_THRESHOLD)limit |= 0b01000;
-//  if(analogRead(LIMIT_V) >= LIMIT_THRESHOLD)limit |= 0b10000;
+//  if(analogRead(LIMIT_X) >= LIMIT_THRESHOLD)limit |= 0b000001;
+//  if(analogRead(LIMIT_Y) >= LIMIT_THRESHOLD)limit |= 0b000010;
+//  if(analogRead(LIMIT_Z) >= LIMIT_THRESHOLD)limit |= 0b000100;
+//  if(analogRead(LIMIT_U) >= LIMIT_THRESHOLD)limit |= 0b001000;
+//  if(analogRead(LIMIT_V) >= LIMIT_THRESHOLD)limit |= 0b010000;
+//#ifdef SUPPORT_W
+//  if(analogRead(LIMIT_W) >= LIMIT_THRESHOLD)limit |= 0b100000;
+//#endif
 
   digitalRead(LIMIT_X);
-  if(digitalRead(LIMIT_X))limit |= 0b00001;
+  if(digitalRead(LIMIT_X))limit |= 0b000001;
   digitalRead(LIMIT_Y);
-  if(digitalRead(LIMIT_Y))limit |= 0b00010;
+  if(digitalRead(LIMIT_Y))limit |= 0b000010;
   digitalRead(LIMIT_Z);
-  if(digitalRead(LIMIT_Z))limit |= 0b00100;
+  if(digitalRead(LIMIT_Z))limit |= 0b000100;
   digitalRead(LIMIT_U);
-  if(digitalRead(LIMIT_U))limit |= 0b01000;
+  if(digitalRead(LIMIT_U))limit |= 0b001000;
   digitalRead(LIMIT_V);
-  if(digitalRead(LIMIT_V))limit |= 0b10000;
+  if(digitalRead(LIMIT_V))limit |= 0b010000;
+#ifdef SUPPORT_W
+  digitalRead(LIMIT_W);
+  if(digitalRead(LIMIT_W))limit |= 0b100000;
+#endif
 
   return limit;
 }
@@ -690,20 +749,22 @@ int directionY = 0;
 int directionZ = 0;
 int directionU = 0;
 int directionV = 0;
+int directionW = 0;
 
 // do a single step with selected motor
-bool step(int x, int y, int z, int u, int v){
+bool step(int x, int y, int z, int u, int v, int w){
 
   if(stopAtLimits){
     byte limits = readLimits();
-    if(limits & 0b00001)x = 0;
-    if(limits & 0b00010)y = 0;
-    if(limits & 0b00100)z = 0;
-    if(limits & 0b01000)u = 0;
-    if(limits & 0b10000)v = 0;
+    if(limits & 0b000001)x = 0;
+    if(limits & 0b000010)y = 0;
+    if(limits & 0b000100)z = 0;
+    if(limits & 0b001000)u = 0;
+    if(limits & 0b010000)v = 0;
+    if(limits & 0b100000)w = 0;
   }
 
-  bool moved = (x!=0) || (y!=0) || (z!=0) || (u!=0) || (v!=0);
+  bool moved = (x!=0) || (y!=0) || (z!=0) || (u!=0) || (v!=0) || (w!=0);
 
   // updating projected position
   xPos += x;
@@ -711,6 +772,7 @@ bool step(int x, int y, int z, int u, int v){
   zPos += z;
   uPos += u;
   vPos += v;
+  wPos += w;
 
   if(positionKnown && !ignoreBoundaries){
     if((xLow!=NO_LIMIT && xPos<=xLow && xPos<=limitedXPos) || (xHigh!=NO_LIMIT && xPos>=xHigh && xPos>=limitedXPos))x = 0;
@@ -718,6 +780,7 @@ bool step(int x, int y, int z, int u, int v){
     if((zLow!=NO_LIMIT && zPos<=zLow && zPos<=limitedZPos) || (zHigh!=NO_LIMIT && zPos>=zHigh && zPos>=limitedZPos))z = 0;
     if((uLow!=NO_LIMIT && uPos<=uLow && uPos<=limitedUPos) || (uHigh!=NO_LIMIT && uPos>=uHigh && uPos>=limitedUPos))u = 0;
     if((vLow!=NO_LIMIT && vPos<=vLow && vPos<=limitedVPos) || (vHigh!=NO_LIMIT && vPos>=vHigh && vPos>=limitedVPos))v = 0;
+    if((wLow!=NO_LIMIT && wPos<=wLow && wPos<=limitedWPos) || (wHigh!=NO_LIMIT && wPos>=wHigh && wPos>=limitedWPos))w = 0;
   }
 
   // changing direction
@@ -726,17 +789,22 @@ bool step(int x, int y, int z, int u, int v){
   bool changeZ = (z != 0) && (directionZ != sign(z));
   bool changeU = (u != 0) && (directionU != sign(u));
   bool changeV = (v != 0) && (directionV != sign(v));
-  if(changeX || changeY || changeZ || changeU || changeV){
+  bool changeW = (w != 0) && (directionW != sign(w));
+  if(changeX || changeY || changeZ || changeU || changeV || changeW){
     if(changeX)directionX = sign(x);
     if(changeY)directionY = sign(y);
     if(changeZ)directionZ = sign(z);
     if(changeU)directionU = sign(u);
     if(changeV)directionV = sign(v);
+    if(changeW)directionW = sign(w);
     digitalWrite(DIR_X, (directionX==-1)? LOW : HIGH);
     digitalWrite(DIR_Y, (directionY==-1)? LOW : HIGH);
     digitalWrite(DIR_Z, (directionZ==-1)? LOW : HIGH);
     digitalWrite(DIR_U, (directionU==-1)? LOW : HIGH);
     digitalWrite(DIR_V, (directionV==-1)? LOW : HIGH);
+#ifdef SUPPORT_W
+    digitalWrite(DIR_W, (directionW==-1)? LOW : HIGH);
+#endif
     delayMicroseconds(20);
     for(unsigned int i=0; i<maxBacklash; i++){
       digitalWrite(STEP_X, (changeX && i<xBacklash)? HIGH : LOW);
@@ -744,12 +812,18 @@ bool step(int x, int y, int z, int u, int v){
       digitalWrite(STEP_Z, (changeZ && i<zBacklash)? HIGH : LOW);
       digitalWrite(STEP_U, (changeU && i<uBacklash)? HIGH : LOW);
       digitalWrite(STEP_V, (changeV && i<vBacklash)? HIGH : LOW);
+#ifdef SUPPORT_W
+      digitalWrite(STEP_W, (changeW && i<wBacklash)? HIGH : LOW);
+#endif
       delayMicroseconds(20);
       digitalWrite(STEP_X, LOW);
       digitalWrite(STEP_Y, LOW);
       digitalWrite(STEP_Z, LOW);
       digitalWrite(STEP_U, LOW);
       digitalWrite(STEP_V, LOW);
+#ifdef SUPPORT_W
+      digitalWrite(STEP_W, LOW);
+#endif
       unsigned long remainingTime = 1000000L / BACKLASH_SPEED;
       if(remainingTime > 65535){
         delay(remainingTime/1000);
@@ -766,6 +840,9 @@ bool step(int x, int y, int z, int u, int v){
   digitalWrite(STEP_Z, z? HIGH : LOW);
   digitalWrite(STEP_U, u? HIGH : LOW);
   digitalWrite(STEP_V, v? HIGH : LOW);
+#ifdef SUPPORT_W
+  digitalWrite(STEP_W, w? HIGH : LOW);
+#endif
 //  delayMicroseconds(20);
 
   // updating limited position
@@ -774,6 +851,7 @@ bool step(int x, int y, int z, int u, int v){
   limitedZPos += z;
   limitedUPos += u;
   limitedVPos += v;
+  limitedWPos += w;
 
   // loading next data
   handleSerial();
@@ -784,6 +862,9 @@ bool step(int x, int y, int z, int u, int v){
   digitalWrite(STEP_Z, LOW);
   digitalWrite(STEP_U, LOW);
   digitalWrite(STEP_V, LOW);
+#ifdef SUPPORT_W
+  digitalWrite(STEP_W, LOW);
+#endif
 //  delayMicroseconds(20);
 
   return moved;
@@ -799,8 +880,8 @@ void stop(){
 
 // low-level translation of line data to motor steps
 void bresenham(
-  unsigned int dx, unsigned int dy, unsigned int dz, unsigned int du, unsigned int dv,
-  char dirX, char dirY, char dirZ, char dirU, char dirV,
+  unsigned int dx, unsigned int dy, unsigned int dz, unsigned int du, unsigned int dv, unsigned int dw,
+  char dirX, char dirY, char dirZ, char dirU, char dirV, char dirW,
   byte rot,
   unsigned int startSpeed, unsigned int endSpeed // steps/s
 ){
@@ -809,10 +890,12 @@ void bresenham(
   int diffZ = 2*dz - dx;
   int diffU = 2*du - dx;
   int diffV = 2*dv - dx;
+  int diffW = 2*dw - dx;
   int y = 1;
   int z = 0;
   int u = 0;
   int v = 0;
+  int w = 0;
   bool movement;
 
   float accel = (((float)endSpeed)*endSpeed-((float)startSpeed)*startSpeed)/(2*dx); // steps/s/s
@@ -829,19 +912,22 @@ void bresenham(
     if(stopping)return;
 
     if(rot == 0){
-      movement = step(dirX, dirY*y, dirZ*z, dirU*u, dirV*v);
+      movement = step(dirX, dirY*y, dirZ*z, dirU*u, dirV*v, dirW*w);
     }
     else if(rot == 1){
-      movement = step(dirV*v, dirX, dirY*y, dirZ*z, dirU*u);
+      movement = step(dirW*w, dirX, dirY*y, dirZ*z, dirU*u, dirV*v);
     }
     else if(rot == 2){
-      movement = step(dirU*u, dirV*v, dirX, dirY*y, dirZ*z);
+      movement = step(dirV*v, dirW*w, dirX, dirY*y, dirZ*z, dirU*u);
     }
     else if(rot == 3){
-      movement = step(dirZ*z, dirU*u, dirV*v, dirX, dirY*y);
+      movement = step(dirU*u, dirV*v, dirW*w, dirX, dirY*y, dirZ*z);
+    }
+    else if(rot == 4){
+      movement = step(dirZ*z, dirU*u, dirV*v, dirW*w, dirX, dirY*y);
     }
     else{
-      movement = step(dirY*y, dirZ*z, dirU*u, dirV*v, dirX);
+      movement = step(dirY*y, dirZ*z, dirU*u, dirV*v, dirW*w, dirX);
     }
 
     if(movement)lastStepCount++;
@@ -871,6 +957,12 @@ void bresenham(
     }
     else v = 0;
     diffV += 2*dv;
+    if(diffW > 0){
+      w = 1;
+      diffW -= 2*dx;
+    }
+    else w = 0;
+    diffW += 2*dw;
 
     firstIter = false;
 
@@ -897,7 +989,7 @@ void bresenham(
 
 // higher-level drawing of arbitrary line segments
 void lineBy(
-  int dx, int dy, int dz, int du, int dv,
+  int dx, int dy, int dz, int du, int dv, int dw,
   unsigned int endSpeed
 ){
   if(!xAxisPresent)dx = 0;
@@ -905,43 +997,51 @@ void lineBy(
   if(!zAxisPresent)dz = 0;
   if(!uAxisPresent)du = 0;
   if(!vAxisPresent)dv = 0;
+  if(!wAxisPresent)dw = 0;
 
   unsigned int absDx = abs(dx);
   unsigned int absDy = abs(dy);
   unsigned int absDz = abs(dz);
   unsigned int absDu = abs(du);
   unsigned int absDv = abs(dv);
+  unsigned int absDw = abs(dw);
 
   unsigned int maxD = absDx;
   if(absDy > maxD)maxD = absDy;
   if(absDz > maxD)maxD = absDz;
   if(absDu > maxD)maxD = absDu;
   if(absDv > maxD)maxD = absDv;
+  if(absDw > maxD)maxD = absDw;
 
   if(maxD == absDx){
-    bresenham(absDx,    absDy,    absDz,    absDu,    absDv,
-              sign(dx), sign(dy), sign(dz), sign(du), sign(dv),
+    bresenham(absDx,    absDy,    absDz,    absDu,    absDv,    absDw,
+              sign(dx), sign(dy), sign(dz), sign(du), sign(dv), sign(dw),
               0, currentSpeed, endSpeed);
   }
   else if(maxD == absDy){
-    bresenham(absDy,    absDz,    absDu,    absDv,    absDx,
-              sign(dy), sign(dz), sign(du), sign(dv), sign(dx),
+    bresenham(absDy,    absDz,    absDu,    absDv,    absDw,    absDx,
+              sign(dy), sign(dz), sign(du), sign(dv), sign(dw), sign(dx),
               1, currentSpeed, endSpeed);
   }
   else if(maxD == absDz){
-    bresenham(absDz,    absDu,    absDv,    absDx,    absDy,
-              sign(dz), sign(du), sign(dv), sign(dx), sign(dy),
+    bresenham(absDz,    absDu,    absDv,    absDw,    absDx,    absDy,
+              sign(dz), sign(du), sign(dv), sign(dw), sign(dx), sign(dy),
               2, currentSpeed, endSpeed);
   }
   else if(maxD == absDu){
-    bresenham(absDu,    absDv,    absDx,    absDy,    absDz,
-              sign(du), sign(dv), sign(dx), sign(dy), sign(dz),
+    bresenham(absDu,    absDv,    absDw,    absDx,    absDy,    absDz,
+              sign(du), sign(dv), sign(dw), sign(dx), sign(dy), sign(dz),
               3, currentSpeed, endSpeed);
   }
-  else{
-    bresenham(absDv,    absDx,    absDy,    absDz,    absDu,
-              sign(dv), sign(dx), sign(dy), sign(dz), sign(du),
+  else if(maxD == absDv){
+    bresenham(absDv,    absDw,    absDx,    absDy,    absDz,    absDu,
+              sign(dv), sign(dw), sign(dx), sign(dy), sign(dz), sign(du),
               4, currentSpeed, endSpeed);
+  }
+  else{
+    bresenham(absDw,    absDx,    absDy,    absDz,    absDu,    absDv,
+              sign(dw), sign(dx), sign(dy), sign(dz), sign(du), sign(dv),
+              5, currentSpeed, endSpeed);
   }
   currentSpeed = endSpeed;
 }
@@ -955,11 +1055,12 @@ void printDebugLimitStatus(){
   byte limits = readLimits();
   Serial.print("dL");
   Serial.write((byte)(64
-    | ((!xAxisPresent || (limits & 0b00001)) << 0)
-    | ((!yAxisPresent || (limits & 0b00010)) << 1)
-    | ((!zAxisPresent || (limits & 0b00100)) << 2)
-    | ((!uAxisPresent || (limits & 0b01000)) << 3)
-    | ((!vAxisPresent || (limits & 0b10000)) << 4)
+    | ((!xAxisPresent || (limits & 0b000001)) << 0)
+    | ((!yAxisPresent || (limits & 0b000010)) << 1)
+    | ((!zAxisPresent || (limits & 0b000100)) << 2)
+    | ((!uAxisPresent || (limits & 0b001000)) << 3)
+    | ((!vAxisPresent || (limits & 0b010000)) << 4)
+    | ((!wAxisPresent || (limits & 0b100000)) << 5)
   ));
 }
 void printDebugStepCount(){
@@ -976,11 +1077,12 @@ void printDebugStepCount(){
 // axis homing
 bool goTowardZero(){
   byte limits = readLimits();
-  if(   (!xAxisPresent || (limits & 0b00001))
-     && (!yAxisPresent || (limits & 0b00010))
-     && (!zAxisPresent || (limits & 0b00100))
-     && (!uAxisPresent || (limits & 0b01000))
-     && (!vAxisPresent || (limits & 0b10000))
+  if(   (!xAxisPresent || (limits & 0b000001))
+     && (!yAxisPresent || (limits & 0b000010))
+     && (!zAxisPresent || (limits & 0b000100))
+     && (!uAxisPresent || (limits & 0b001000))
+     && (!vAxisPresent || (limits & 0b010000))
+     && (!wAxisPresent || (limits & 0b100000))
   ){ // all limits reached
 //    Serial.print("d1"); printDebugMovingStatus();
 //    printDebugLimitStatus();
@@ -994,6 +1096,7 @@ bool goTowardZero(){
       zZeroUp? -ZERO_BACK_DISTANCE : ZERO_BACK_DISTANCE,
       uZeroUp? -ZERO_BACK_DISTANCE : ZERO_BACK_DISTANCE,
       vZeroUp? -ZERO_BACK_DISTANCE : ZERO_BACK_DISTANCE,
+      wZeroUp? -ZERO_BACK_DISTANCE : ZERO_BACK_DISTANCE,
       ZERO_SPEED_FAST
     );
     ignoreBoundaries = false;
@@ -1011,6 +1114,7 @@ bool goTowardZero(){
       zZeroUp? ZERO_FORWARD_DISTANCE : -ZERO_FORWARD_DISTANCE,
       uZeroUp? ZERO_FORWARD_DISTANCE : -ZERO_FORWARD_DISTANCE,
       vZeroUp? ZERO_FORWARD_DISTANCE : -ZERO_FORWARD_DISTANCE,
+      wZeroUp? ZERO_FORWARD_DISTANCE : -ZERO_FORWARD_DISTANCE,
       ZERO_SPEED_SLOW
     );
     ignoreBoundaries = false;
@@ -1031,6 +1135,7 @@ bool goTowardZero(){
       zZeroUp? ZERO_STEP_DISTANCE : -ZERO_STEP_DISTANCE,
       uZeroUp? ZERO_STEP_DISTANCE : -ZERO_STEP_DISTANCE,
       vZeroUp? ZERO_STEP_DISTANCE : -ZERO_STEP_DISTANCE,
+      wZeroUp? ZERO_STEP_DISTANCE : -ZERO_STEP_DISTANCE,
       ZERO_SPEED_FAST
     );
     ignoreBoundaries = false;
@@ -1054,18 +1159,27 @@ void setup(){
   pinMode(STEP_Z, OUTPUT);
   pinMode(STEP_U, OUTPUT);
   pinMode(STEP_V, OUTPUT);
+#ifdef SUPPORT_W
+  pinMode(STEP_W, OUTPUT);
+#endif
 
   pinMode(DIR_X, OUTPUT);
   pinMode(DIR_Y, OUTPUT);
   pinMode(DIR_Z, OUTPUT);
   pinMode(DIR_U, OUTPUT);
   pinMode(DIR_V, OUTPUT);
+#ifdef SUPPORT_W
+  pinMode(DIR_W, OUTPUT);
+#endif
 
   pinMode(LIMIT_X, INPUT);
   pinMode(LIMIT_Y, INPUT);
   pinMode(LIMIT_Z, INPUT);
   pinMode(LIMIT_U, INPUT);
   pinMode(LIMIT_V, INPUT);
+#ifdef SUPPORT_W
+  pinMode(LIMIT_W, INPUT);
+#endif
 
   digitalWrite(LED_BUILTIN, LOW);
 
@@ -1074,12 +1188,18 @@ void setup(){
   digitalWrite(STEP_Z, LOW);
   digitalWrite(STEP_U, LOW);
   digitalWrite(STEP_V, LOW);
+#ifdef SUPPORT_W
+  digitalWrite(STEP_W, LOW);
+#endif
 
   digitalWrite(DIR_X, LOW);
   digitalWrite(DIR_Y, LOW);
   digitalWrite(DIR_Z, LOW);
   digitalWrite(DIR_U, LOW);
   digitalWrite(DIR_V, LOW);
+#ifdef SUPPORT_W
+  digitalWrite(DIR_W, LOW);
+#endif
 
   Serial.begin(115200);
   while(!Serial)delay(1);
@@ -1099,8 +1219,8 @@ void loop(){
   else if(serialPhase == S_ZERO){ // axis homing
     if(goTowardZero()){
       serialPhase = S_READY;
-      xPos = yPos = zPos = uPos = vPos = 0;
-      limitedXPos = limitedYPos = limitedZPos = limitedUPos = limitedVPos = 0;
+      xPos = yPos = zPos = uPos = vPos = wPos = 0;
+      limitedXPos = limitedYPos = limitedZPos = limitedUPos = limitedVPos = limitedWPos = 0;
       setPositionKnown(true);
       Serial.write('0');
     }
@@ -1122,7 +1242,7 @@ void loop(){
     Serial.write('W');
     ignoreBoundaries = (priorityMove.type == 'K');
     lineBy(
-      priorityMove.dx, priorityMove.dy, priorityMove.dz, priorityMove.du, priorityMove.dv,
+      priorityMove.dx, priorityMove.dy, priorityMove.dz, priorityMove.du, priorityMove.dv, priorityMove.dw,
       currentSpeed
     );
     ignoreBoundaries = false;
@@ -1135,7 +1255,7 @@ void loop(){
   else if(moving && remaining){
     move_t nextMove = peekBuffer();
     lineBy(
-      nextMove.dx, nextMove.dy, nextMove.dz, nextMove.du, nextMove.dv,
+      nextMove.dx, nextMove.dy, nextMove.dz, nextMove.du, nextMove.dv, nextMove.dw,
       (remaining == 1)? LOW_SPEED : max(((unsigned int)nextMove.endSpeed) << SPEED_SHIFT, LOW_SPEED)
     );
     if(!stopping)popBuffer();

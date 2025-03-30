@@ -7,6 +7,7 @@ typedef struct {
   int dz;
   int du;
   int dv;
+  int dw;
   unsigned char endSpeed;
 } move_t;
 
@@ -24,6 +25,8 @@ typedef enum {
   S_MOVE_U1,
   S_MOVE_V0,
   S_MOVE_V1,
+  S_MOVE_W0,
+  S_MOVE_W1,
   S_MOVE_SPEED,
 
   S_MOVE_IGNORE,
@@ -37,6 +40,8 @@ typedef enum {
   S_MOVE_IGNORE_U1,
   S_MOVE_IGNORE_V0,
   S_MOVE_IGNORE_V1,
+  S_MOVE_IGNORE_W0,
+  S_MOVE_IGNORE_W1,
   S_MOVE_IGNORE_SPEED,
 
   S_MOVE_PRIO,
@@ -50,6 +55,8 @@ typedef enum {
   S_MOVE_PRIO_U1,
   S_MOVE_PRIO_V0,
   S_MOVE_PRIO_V1,
+  S_MOVE_PRIO_W0,
+  S_MOVE_PRIO_W1,
   S_MOVE_PRIO_SPEED,
 
   S_ZERO,
