@@ -466,6 +466,94 @@ void handleSerial(){
         else if(data == 'C'){ // configuration mode
           serialPhase = S_CONFIG;
         }
+        else if(data == 'p'){ // position feedback
+          if(xAxisPresent){
+            Serial.write('x');
+            Serial.write((byte)((xPos >> 24) & 0xFF));
+            Serial.write((byte)((xPos >> 16) & 0xFF));
+            Serial.write((byte)((xPos >>  8) & 0xFF));
+            Serial.write((byte)((xPos >>  0) & 0xFF));
+          }
+          if(yAxisPresent){
+            Serial.write('y');
+            Serial.write((byte)((yPos >> 24) & 0xFF));
+            Serial.write((byte)((yPos >> 16) & 0xFF));
+            Serial.write((byte)((yPos >>  8) & 0xFF));
+            Serial.write((byte)((yPos >>  0) & 0xFF));
+          }
+          if(zAxisPresent){
+            Serial.write('z');
+            Serial.write((byte)((zPos >> 24) & 0xFF));
+            Serial.write((byte)((zPos >> 16) & 0xFF));
+            Serial.write((byte)((zPos >>  8) & 0xFF));
+            Serial.write((byte)((zPos >>  0) & 0xFF));
+          }
+          if(uAxisPresent){
+            Serial.write('u');
+            Serial.write((byte)((uPos >> 24) & 0xFF));
+            Serial.write((byte)((uPos >> 16) & 0xFF));
+            Serial.write((byte)((uPos >>  8) & 0xFF));
+            Serial.write((byte)((uPos >>  0) & 0xFF));
+          }
+          if(vAxisPresent){
+            Serial.write('v');
+            Serial.write((byte)((vPos >> 24) & 0xFF));
+            Serial.write((byte)((vPos >> 16) & 0xFF));
+            Serial.write((byte)((vPos >>  8) & 0xFF));
+            Serial.write((byte)((vPos >>  0) & 0xFF));
+          }
+          if(wAxisPresent){
+            Serial.write('w');
+            Serial.write((byte)((wPos >> 24) & 0xFF));
+            Serial.write((byte)((wPos >> 16) & 0xFF));
+            Serial.write((byte)((wPos >>  8) & 0xFF));
+            Serial.write((byte)((wPos >>  0) & 0xFF));
+          }
+        }
+        else if(data == 'P'){ // limited position feedback
+          if(xAxisPresent){
+            Serial.write('X');
+            Serial.write((byte)((limitedXPos >> 24) & 0xFF));
+            Serial.write((byte)((limitedXPos >> 16) & 0xFF));
+            Serial.write((byte)((limitedXPos >>  8) & 0xFF));
+            Serial.write((byte)((limitedXPos >>  0) & 0xFF));
+          }
+          if(yAxisPresent){
+            Serial.write('Y');
+            Serial.write((byte)((limitedYPos >> 24) & 0xFF));
+            Serial.write((byte)((limitedYPos >> 16) & 0xFF));
+            Serial.write((byte)((limitedYPos >>  8) & 0xFF));
+            Serial.write((byte)((limitedYPos >>  0) & 0xFF));
+          }
+          if(zAxisPresent){
+            Serial.write('Z');
+            Serial.write((byte)((limitedZPos >> 24) & 0xFF));
+            Serial.write((byte)((limitedZPos >> 16) & 0xFF));
+            Serial.write((byte)((limitedZPos >>  8) & 0xFF));
+            Serial.write((byte)((limitedZPos >>  0) & 0xFF));
+          }
+          if(uAxisPresent){
+            Serial.write('U');
+            Serial.write((byte)((limitedUPos >> 24) & 0xFF));
+            Serial.write((byte)((limitedUPos >> 16) & 0xFF));
+            Serial.write((byte)((limitedUPos >>  8) & 0xFF));
+            Serial.write((byte)((limitedUPos >>  0) & 0xFF));
+          }
+          if(vAxisPresent){
+            Serial.write('V');
+            Serial.write((byte)((limitedVPos >> 24) & 0xFF));
+            Serial.write((byte)((limitedVPos >> 16) & 0xFF));
+            Serial.write((byte)((limitedVPos >>  8) & 0xFF));
+            Serial.write((byte)((limitedVPos >>  0) & 0xFF));
+          }
+          if(wAxisPresent){
+            Serial.write('W');
+            Serial.write((byte)((limitedWPos >> 24) & 0xFF));
+            Serial.write((byte)((limitedWPos >> 16) & 0xFF));
+            Serial.write((byte)((limitedWPos >>  8) & 0xFF));
+            Serial.write((byte)((limitedWPos >>  0) & 0xFF));
+          }
+        }
         else{
           Serial.write('?'); // unrecognized command
         }
