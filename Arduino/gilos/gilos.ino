@@ -1,7 +1,7 @@
 
 #include "gilos.h"
 
-const byte firmwareVersion = 6;
+const byte firmwareVersion = 7;
 
 
 
@@ -48,6 +48,8 @@ const byte firmwareVersion = 6;
 #define LIMIT_U A1
 #define LIMIT_V A0
 #define LIMIT_W -1
+
+#define CHUCK -1
 
 #define ALARM 2
 
@@ -403,6 +405,9 @@ void handleSerial(){
               (moving << 0)
             | (stopping << 1)
             | (stopAtLimits << 2)
+#ifdef SUPPORT_CHUCK
+            | (digitalRead(CHUCK) << 3)
+#endif
           ));
           Serial.write((byte)(bresenhamIter >> 8)); // Bresenham state upper
           Serial.write((byte)(bresenhamIter & 0xFF)); // Bresenham state lower
@@ -442,12 +447,18 @@ void handleSerial(){
           stop();
 
 //          Serial.write('0'); // ?? debug dummified zeroing
-//          xPos = yPos = zPos = uPos = vPos = 0;
-//          limitedXPos = limitedYPos = limitedZPos = limitedUPos = limitedVPos = 0;
+//          xPos = yPos = zPos = uPos = vPos = wPos = 0;
+//          limitedXPos = limitedYPos = limitedZPos = limitedUPos = limitedVPos = limitedWPos = 0;
 //          setPositionKnown(true);
 
           setPositionKnown(false);
           serialPhase = S_ZERO;
+        }
+        else if(data == 'o'){ // open chuck
+          chuckOpen();
+        }
+        else if(data == 'c'){ // close chuck
+          chuckClose();
         }
         else if(data == 'l'){ // blink led
           stop();
@@ -1235,6 +1246,18 @@ bool goTowardZero(){
   }
 }
 
+void chuckOpen(){
+#ifdef SUPPORT_CHUCK
+  digitalWrite(CHUCK, HIGH);
+#endif
+}
+
+void chuckClose(){
+#ifdef SUPPORT_CHUCK
+  digitalWrite(CHUCK, LOW);
+#endif
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1267,6 +1290,11 @@ void setup(){
   pinMode(LIMIT_V, INPUT);
 #ifdef SUPPORT_W
   pinMode(LIMIT_W, INPUT);
+#endif
+
+#ifdef SUPPORT_CHUCK
+  pinMode(CHUCK, OUTPUT);
+  digitalWrite(CHUCK, LOW);
 #endif
 
   digitalWrite(LED_BUILTIN, LOW);
