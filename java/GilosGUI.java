@@ -69,6 +69,8 @@ public class GilosGUI extends Frame
 	public static final String MSG_KEYBOARINPUT = "klávesnice";
 	public static final String MSG_MANUAL_LIMITS = "hlídat limity";
 	public static final String MSG_NOLIMITS = "(nehlídá limity)";
+	public static final String MSG_BUTTON_UP = "nahoru";
+	public static final String MSG_BUTTON_DOWN = "dolů";
 
 	// status bar messages - čeština
 	public static final String MSG_FILE_BADEXT = "Neznámý typ souboru: %s";
@@ -152,7 +154,9 @@ public class GilosGUI extends Frame
 		var topConstraints = new GridBagConstraints();
 		topConstraints.gridx = 0;
 		topConstraints.gridy = 0;
-		topConstraints.fill = GridBagConstraints.HORIZONTAL;
+		topConstraints.weightx = 1;
+		topConstraints.weighty = 1;
+		topConstraints.fill = GridBagConstraints.BOTH;
 
 		JPanel separator;
 
@@ -202,12 +206,16 @@ public class GilosGUI extends Frame
 
 		// tab pane ////////////////////////////////////////////////////////////
 
+		topConstraints.weighty = 0;
 		add(new JLabel(" "), topConstraints); // separator
+		topConstraints.weighty = 1;
 		topConstraints.gridy++;
 
 		var tabs = new JTabbedPane();
 		tabs.addChangeListener(this);
+		topConstraints.weighty = 10;
 		add(tabs, topConstraints);
+		topConstraints.weighty = 1;
 		topConstraints.gridy++;
 
 		// axis settings ///////////////////////////////////////////////////////
@@ -1063,7 +1071,9 @@ public class GilosGUI extends Frame
 		// status bar //////////////////////////////////////////////////////////
 
 		statusBar = new Label("");
+		topConstraints.weighty = 0;
 		add(statusBar, topConstraints);
+		topConstraints.weighty = 1;
 		topConstraints.gridy++;
 
 		// motion control //////////////////////////////////////////////////////
@@ -1099,8 +1109,7 @@ public class GilosGUI extends Frame
 
 		addWindowListener(this);
 		setTitle(MSG_TITLE);
-//		getContentPane().setPreferredSize(new Dimension(500, 600));
-		setSize(new Dimension(380, 520));
+		pack();
 		setVisible(true);
 	}
 
