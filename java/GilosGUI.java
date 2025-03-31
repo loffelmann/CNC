@@ -59,6 +59,7 @@ public class GilosGUI extends Frame
 	public static final String MSG_SPEEDLABEL = "kr/s";
 	public static final String MSG_SELECTFILE = "vyber soubor";
 	public static final String MSG_TAB_AXES = "osy";
+	public static final String MSG_TAB_TABLET = "tablet";
 	public static final String MSG_TAB_CANVAS = "klikadlo";
 	public static final String MSG_TAB_FILE = "soubor";
 	public static final String MSG_TAB_MANUAL = "posun";
@@ -138,6 +139,8 @@ public class GilosGUI extends Frame
 	private double[] firstFilePoint;
 
 	private boolean waitForFileToolPathEnd = false;
+
+	private boolean touchButtonActive = false;
 
 	private GilosController controller;
 
@@ -1016,6 +1019,139 @@ public class GilosGUI extends Frame
 
 		tabs.add(MSG_TAB_MANUAL, manualTab);
 
+		// movement buttons for touch screen ///////////////////////////////////
+
+		var tabletTab = new Panel();
+		tabletTab.setLayout(new GridBagLayout());
+		cons = new GridBagConstraints();
+		cons.fill = GridBagConstraints.BOTH;
+		cons.weightx = 1;
+		cons.weighty = 1;
+
+		var upButton = new JButton(MSG_XNAME+" "+MSG_BUTTON_UP);
+		upButton.setActionCommand(controller.COMMAND_INTRUN_X_UP);
+		upButton.getModel().addChangeListener(this);
+		connectedOnly.add(upButton);
+		stoppedOnly.add(upButton);
+		cons.gridy = 1;
+		cons.gridx = 1;
+		tabletTab.add(upButton, cons);
+
+		var downButton = new JButton(MSG_XNAME+" "+MSG_BUTTON_DOWN);
+		downButton.setActionCommand(controller.COMMAND_INTRUN_X_DOWN);
+		downButton.getModel().addChangeListener(this);
+		connectedOnly.add(downButton);
+		stoppedOnly.add(downButton);
+		cons.gridy = 2;
+		cons.gridx = 1;
+		tabletTab.add(downButton, cons);
+
+		upButton = new JButton(MSG_YNAME+" "+MSG_BUTTON_UP);
+		upButton.setActionCommand(controller.COMMAND_INTRUN_Y_UP);
+		upButton.getModel().addChangeListener(this);
+		connectedOnly.add(upButton);
+		stoppedOnly.add(upButton);
+		cons.gridy = 1;
+		cons.gridx = 3;
+		tabletTab.add(upButton, cons);
+
+		downButton = new JButton(MSG_YNAME+" "+MSG_BUTTON_DOWN);
+		downButton.setActionCommand(controller.COMMAND_INTRUN_Y_DOWN);
+		downButton.getModel().addChangeListener(this);
+		connectedOnly.add(downButton);
+		stoppedOnly.add(downButton);
+		cons.gridy = 2;
+		cons.gridx = 3;
+		tabletTab.add(downButton, cons);
+
+		upButton = new JButton(MSG_ZNAME+" "+MSG_BUTTON_UP);
+		upButton.setActionCommand(controller.COMMAND_INTRUN_Z_UP);
+		upButton.getModel().addChangeListener(this);
+		connectedOnly.add(upButton);
+		stoppedOnly.add(upButton);
+		cons.gridy = 1;
+		cons.gridx = 5;
+		tabletTab.add(upButton, cons);
+
+		downButton = new JButton(MSG_ZNAME+" "+MSG_BUTTON_DOWN);
+		downButton.setActionCommand(controller.COMMAND_INTRUN_Z_DOWN);
+		downButton.getModel().addChangeListener(this);
+		connectedOnly.add(downButton);
+		stoppedOnly.add(downButton);
+		cons.gridy = 2;
+		cons.gridx = 5;
+		tabletTab.add(downButton, cons);
+
+		upButton = new JButton(MSG_UNAME+" "+MSG_BUTTON_UP);
+		upButton.setActionCommand(controller.COMMAND_INTRUN_U_UP);
+		upButton.getModel().addChangeListener(this);
+		connectedOnly.add(upButton);
+		stoppedOnly.add(upButton);
+		cons.gridy = 4;
+		cons.gridx = 1;
+		tabletTab.add(upButton, cons);
+
+		downButton = new JButton(MSG_UNAME+" "+MSG_BUTTON_DOWN);
+		downButton.setActionCommand(controller.COMMAND_INTRUN_U_DOWN);
+		downButton.getModel().addChangeListener(this);
+		connectedOnly.add(downButton);
+		stoppedOnly.add(downButton);
+		cons.gridy = 5;
+		cons.gridx = 1;
+		tabletTab.add(downButton, cons);
+
+		upButton = new JButton(MSG_VNAME+" "+MSG_BUTTON_UP);
+		upButton.setActionCommand(controller.COMMAND_INTRUN_V_UP);
+		upButton.getModel().addChangeListener(this);
+		connectedOnly.add(upButton);
+		stoppedOnly.add(upButton);
+		cons.gridy = 4;
+		cons.gridx = 3;
+		tabletTab.add(upButton, cons);
+
+		downButton = new JButton(MSG_VNAME+" "+MSG_BUTTON_DOWN);
+		downButton.setActionCommand(controller.COMMAND_INTRUN_V_DOWN);
+		downButton.getModel().addChangeListener(this);
+		connectedOnly.add(downButton);
+		stoppedOnly.add(downButton);
+		cons.gridy = 5;
+		cons.gridx = 3;
+		tabletTab.add(downButton, cons);
+
+		upButton = new JButton(MSG_WNAME+" "+MSG_BUTTON_UP);
+		upButton.setActionCommand(controller.COMMAND_INTRUN_W_UP);
+		upButton.getModel().addChangeListener(this);
+		connectedOnly.add(upButton);
+		stoppedOnly.add(upButton);
+		cons.gridy = 4;
+		cons.gridx = 5;
+		tabletTab.add(upButton, cons);
+
+		downButton = new JButton(MSG_WNAME+" "+MSG_BUTTON_DOWN);
+		downButton.setActionCommand(controller.COMMAND_INTRUN_W_DOWN);
+		downButton.getModel().addChangeListener(this);
+		connectedOnly.add(downButton);
+		stoppedOnly.add(downButton);
+		cons.gridy = 5;
+		cons.gridx = 5;
+		tabletTab.add(downButton, cons);
+
+		// separators
+
+		cons.weightx = cons.weighty = 0.1;
+		cons.gridx = 0;
+		cons.gridy = 0;
+		tabletTab.add(new Panel(), cons);
+		cons.gridx = 2;
+		cons.gridy = 3;
+		tabletTab.add(new Panel(), cons);
+		cons.gridx = 4;
+		cons.gridy = 6;
+		tabletTab.add(new Panel(), cons);
+		cons.weightx = cons.weighty = 1;
+
+		tabs.add(MSG_TAB_TABLET, tabletTab);
+
 		// drawing area (test only?) ///////////////////////////////////////////
 
 		var canvasTab = new Panel();
@@ -1770,9 +1906,63 @@ public class GilosGUI extends Frame
 	// ChangeListener interface (used to detect tab switching)
 
 	public void stateChanged(ChangeEvent ev){
-		getAxes();
-		updatePreview();
+		Object source = ev.getSource();
+		if(source instanceof ButtonModel){ // touchscreen buttons
+			ButtonModel model = (ButtonModel) source;
+			if(model.isArmed() && !touchButtonActive){
+				this.touchButtonMove(model.getActionCommand());
+				touchButtonActive = true;
+			}
+			if(!model.isArmed() && touchButtonActive){
+				controller.interactiveStop();
+				touchButtonActive = false;
+			}
+		}
+		else{
+			getAxes();
+			updatePreview();
+		}
 	}
+
+	public void touchButtonMove(String command){
+		if(command == controller.COMMAND_INTRUN_X_UP){
+			controller.interactiveMove(0, 1);
+		}
+		else if(command == controller.COMMAND_INTRUN_X_DOWN){
+			controller.interactiveMove(0, -1);
+		}
+		else if(command == controller.COMMAND_INTRUN_Y_UP){
+			controller.interactiveMove(1, 1);
+		}
+		else if(command == controller.COMMAND_INTRUN_Y_DOWN){
+			controller.interactiveMove(1, -1);
+		}
+		else if(command == controller.COMMAND_INTRUN_Z_UP){
+			controller.interactiveMove(2, 1);
+		}
+		else if(command == controller.COMMAND_INTRUN_Z_DOWN){
+			controller.interactiveMove(2, -1);
+		}
+		else if(command == controller.COMMAND_INTRUN_U_UP){
+			controller.interactiveMove(3, 1);
+		}
+		else if(command == controller.COMMAND_INTRUN_U_DOWN){
+			controller.interactiveMove(3, -1);
+		}
+		else if(command == controller.COMMAND_INTRUN_V_UP){
+			controller.interactiveMove(4, 1);
+		}
+		else if(command == controller.COMMAND_INTRUN_V_DOWN){
+			controller.interactiveMove(4, -1);
+		}
+		else if(command == controller.COMMAND_INTRUN_W_UP){
+			controller.interactiveMove(5, 1);
+		}
+		else if(command == controller.COMMAND_INTRUN_W_DOWN){
+			controller.interactiveMove(5, -1);
+		}
+	}
+
 
 	// ActionListener interface (used to open file dialog)
 
