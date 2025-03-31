@@ -29,13 +29,25 @@ public class GilosController implements ActionListener {
 	public static final String COMMAND_BACKSPACE = "backspace";
 	public static final String COMMAND_CLEAR = "clear";
 	public static final String COMMAND_KILL = "kill";
-	public static final String COMMAND_MANUALRUN = "manual run";
-	public static final String COMMAND_MANUALRUN_X = "manual run X";
-	public static final String COMMAND_MANUALRUN_Y = "manual run Y";
-	public static final String COMMAND_MANUALRUN_Z = "manual run Z";
-	public static final String COMMAND_MANUALRUN_U = "manual run U";
-	public static final String COMMAND_MANUALRUN_V = "manual run V";
-	public static final String COMMAND_MANUALRUN_W = "manual run W";
+	public static final String COMMAND_NUMRUN = "numerical run";
+	public static final String COMMAND_NUMRUN_X = "numerical run X";
+	public static final String COMMAND_NUMRUN_Y = "numerical run Y";
+	public static final String COMMAND_NUMRUN_Z = "numerical run Z";
+	public static final String COMMAND_NUMRUN_U = "numerical run U";
+	public static final String COMMAND_NUMRUN_V = "numerical run V";
+	public static final String COMMAND_NUMRUN_W = "numerical run W";
+	public static final String COMMAND_INTRUN_X_UP = "interactive run X up";
+	public static final String COMMAND_INTRUN_Y_UP = "interactive run Y up";
+	public static final String COMMAND_INTRUN_Z_UP = "interactive run Z up";
+	public static final String COMMAND_INTRUN_U_UP = "interactive run U up";
+	public static final String COMMAND_INTRUN_V_UP = "interactive run V up";
+	public static final String COMMAND_INTRUN_W_UP = "interactive run W up";
+	public static final String COMMAND_INTRUN_X_DOWN = "interactive run X down";
+	public static final String COMMAND_INTRUN_Y_DOWN = "interactive run Y down";
+	public static final String COMMAND_INTRUN_Z_DOWN = "interactive run Z down";
+	public static final String COMMAND_INTRUN_U_DOWN = "interactive run U down";
+	public static final String COMMAND_INTRUN_V_DOWN = "interactive run V down";
+	public static final String COMMAND_INTRUN_W_DOWN = "interactive run W down";
 
 	private static GilosController controller;
 	private static GilosGUI gui;
@@ -156,9 +168,18 @@ public class GilosController implements ActionListener {
 	/**
 	 * Called from GUI to trigger keyboard-controlled movement
 	 */
-	public synchronized void keyboardMove(int axis, int direction){
+	public synchronized void interactiveMove(int axis, int direction){
 		if(gilos.manualReady()){
-			System.out.println("adding keyboard move");
+			if((axis == 0 && !machineConf.x.exists())
+			|| (axis == 1 && !machineConf.y.exists())
+			|| (axis == 2 && !machineConf.z.exists())
+			|| (axis == 3 && !machineConf.u.exists())
+			|| (axis == 4 && !machineConf.v.exists())
+			|| (axis == 5 && !machineConf.w.exists())
+			){
+				return;
+			}
+			System.out.println("adding interactive move");
 			if(!running){
 				if(!updateAxes())return;
 			}
@@ -179,7 +200,7 @@ public class GilosController implements ActionListener {
 	/**
 	 * Called from GUI to end keyboard-controlled movement when the key is released
 	 */
-	public void keyboardStop(){
+	public void interactiveStop(){
 		gilos.stop();
 		updateRunning(false, gui.MODE_RUN);
 	}
@@ -273,13 +294,13 @@ public class GilosController implements ActionListener {
 				gilos.goToZero();
 				break;
 
-			case COMMAND_MANUALRUN:
-			case COMMAND_MANUALRUN_X:
-			case COMMAND_MANUALRUN_Y:
-			case COMMAND_MANUALRUN_Z:
-			case COMMAND_MANUALRUN_U:
-			case COMMAND_MANUALRUN_V:
-			case COMMAND_MANUALRUN_W:
+			case COMMAND_NUMRUN:
+			case COMMAND_NUMRUN_X:
+			case COMMAND_NUMRUN_Y:
+			case COMMAND_NUMRUN_Z:
+			case COMMAND_NUMRUN_U:
+			case COMMAND_NUMRUN_V:
+			case COMMAND_NUMRUN_W:
 				// make a button-triggered manual move
 
 				gui.setStatus(gui.MSG_INPUTMODE_MANUAL);
@@ -302,13 +323,13 @@ public class GilosController implements ActionListener {
 				}
 
 				// handling single-axis moves
-				if(!cmd.equals(COMMAND_MANUALRUN)){
-					if(!cmd.equals(COMMAND_MANUALRUN_X))shift[0] = 0;
-					if(!cmd.equals(COMMAND_MANUALRUN_Y))shift[1] = 0;
-					if(!cmd.equals(COMMAND_MANUALRUN_Z))shift[2] = 0;
-					if(!cmd.equals(COMMAND_MANUALRUN_U))shift[3] = 0;
-					if(!cmd.equals(COMMAND_MANUALRUN_V))shift[4] = 0;
-					if(!cmd.equals(COMMAND_MANUALRUN_W))shift[5] = 0;
+				if(!cmd.equals(COMMAND_NUMRUN)){
+					if(!cmd.equals(COMMAND_NUMRUN_X))shift[0] = 0;
+					if(!cmd.equals(COMMAND_NUMRUN_Y))shift[1] = 0;
+					if(!cmd.equals(COMMAND_NUMRUN_Z))shift[2] = 0;
+					if(!cmd.equals(COMMAND_NUMRUN_U))shift[3] = 0;
+					if(!cmd.equals(COMMAND_NUMRUN_V))shift[4] = 0;
+					if(!cmd.equals(COMMAND_NUMRUN_W))shift[5] = 0;
 				}
 
 				// clip at limits if specified

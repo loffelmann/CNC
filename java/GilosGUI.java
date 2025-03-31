@@ -757,7 +757,7 @@ public class GilosGUI extends Frame
 
 		xRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		xRunButton.addActionListener(controller);
-		xRunButton.setActionCommand(controller.COMMAND_MANUALRUN_X);
+		xRunButton.setActionCommand(controller.COMMAND_NUMRUN_X);
 		connectedOnly.add(xRunButton);
 		stoppedOnly.add(xRunButton);
 		cons.gridx++;
@@ -784,7 +784,7 @@ public class GilosGUI extends Frame
 
 		yRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		yRunButton.addActionListener(controller);
-		yRunButton.setActionCommand(controller.COMMAND_MANUALRUN_Y);
+		yRunButton.setActionCommand(controller.COMMAND_NUMRUN_Y);
 		connectedOnly.add(yRunButton);
 		stoppedOnly.add(yRunButton);
 		cons.gridx++;
@@ -811,7 +811,7 @@ public class GilosGUI extends Frame
 
 		zRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		zRunButton.addActionListener(controller);
-		zRunButton.setActionCommand(controller.COMMAND_MANUALRUN_Z);
+		zRunButton.setActionCommand(controller.COMMAND_NUMRUN_Z);
 		connectedOnly.add(zRunButton);
 		stoppedOnly.add(zRunButton);
 		cons.gridx++;
@@ -838,7 +838,7 @@ public class GilosGUI extends Frame
 
 		uRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		uRunButton.addActionListener(controller);
-		uRunButton.setActionCommand(controller.COMMAND_MANUALRUN_U);
+		uRunButton.setActionCommand(controller.COMMAND_NUMRUN_U);
 		connectedOnly.add(uRunButton);
 		stoppedOnly.add(uRunButton);
 		cons.gridx++;
@@ -866,7 +866,7 @@ public class GilosGUI extends Frame
 
 		vRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		vRunButton.addActionListener(controller);
-		vRunButton.setActionCommand(controller.COMMAND_MANUALRUN_V);
+		vRunButton.setActionCommand(controller.COMMAND_NUMRUN_V);
 		connectedOnly.add(vRunButton);
 		stoppedOnly.add(vRunButton);
 		cons.gridx++;
@@ -894,7 +894,7 @@ public class GilosGUI extends Frame
 
 		wRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		wRunButton.addActionListener(controller);
-		wRunButton.setActionCommand(controller.COMMAND_MANUALRUN_V);
+		wRunButton.setActionCommand(controller.COMMAND_NUMRUN_W);
 		connectedOnly.add(wRunButton);
 		stoppedOnly.add(wRunButton);
 		cons.gridx++;
@@ -910,7 +910,7 @@ public class GilosGUI extends Frame
 
 		var manualRunButton = new JButton(MSG_BUTTON_MANUALRUN);
 		manualRunButton.addActionListener(controller);
-		manualRunButton.setActionCommand(controller.COMMAND_MANUALRUN);
+		manualRunButton.setActionCommand(controller.COMMAND_NUMRUN);
 		connectedOnly.add(manualRunButton);
 		stoppedOnly.add(manualRunButton);
 		cons.gridx++;
@@ -932,52 +932,40 @@ public class GilosGUI extends Frame
 				System.out.println("keydown "+keyCodeToDebug(ev.getKeyCode()));
 				switch(ev.getKeyCode()){
 					case KeyEvent.VK_NUMPAD4:
-						if(!machineConf.x.exists())break;
-						controller.keyboardMove(0, -1);
+						controller.interactiveMove(0, -1);
 						break;
 					case KeyEvent.VK_NUMPAD6:
-						if(!machineConf.x.exists())break;
-						controller.keyboardMove(0, +1);
+						controller.interactiveMove(0, +1);
 						break;
 					case KeyEvent.VK_NUMPAD2:
-						if(!machineConf.y.exists())break;
-						controller.keyboardMove(1, -1);
+						controller.interactiveMove(1, -1);
 						break;
 					case KeyEvent.VK_NUMPAD8:
-						if(!machineConf.y.exists())break;
-						controller.keyboardMove(1, +1);
+						controller.interactiveMove(1, +1);
 						break;
 					case KeyEvent.VK_NUMPAD3:
-						if(!machineConf.z.exists())break;
-						controller.keyboardMove(2, -1);
+						controller.interactiveMove(2, -1);
 						break;
 					case KeyEvent.VK_NUMPAD9:
-						if(!machineConf.z.exists())break;
-						controller.keyboardMove(2, +1);
+						controller.interactiveMove(2, +1);
 						break;
 					case KeyEvent.VK_LEFT:
-						if(!machineConf.u.exists())break;
-						controller.keyboardMove(3, -1);
+						controller.interactiveMove(3, -1);
 						break;
 					case KeyEvent.VK_RIGHT:
-						if(!machineConf.u.exists())break;
-						controller.keyboardMove(3, +1);
+						controller.interactiveMove(3, +1);
 						break;
 					case KeyEvent.VK_DOWN:
-						if(!machineConf.v.exists())break;
-						controller.keyboardMove(4, -1);
+						controller.interactiveMove(4, -1);
 						break;
 					case KeyEvent.VK_UP:
-						if(!machineConf.v.exists())break;
-						controller.keyboardMove(4, +1);
+						controller.interactiveMove(4, +1);
 						break;
 					case KeyEvent.VK_PAGE_DOWN:
-						if(!machineConf.w.exists())break;
-						controller.keyboardMove(5, -1);
+						controller.interactiveMove(5, -1);
 						break;
 					case KeyEvent.VK_PAGE_UP:
-						if(!machineConf.w.exists())break;
-						controller.keyboardMove(5, +1);
+						controller.interactiveMove(5, +1);
 						break;
 				}
 			}
@@ -1001,7 +989,7 @@ public class GilosGUI extends Frame
 					case KeyEvent.VK_UP:
 					case KeyEvent.VK_PAGE_DOWN:
 					case KeyEvent.VK_PAGE_UP:
-						controller.keyboardStop();
+						controller.interactiveStop();
 				}
 			}
 		});
