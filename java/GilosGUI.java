@@ -522,6 +522,69 @@ public class GilosGUI extends Frame
 		cons.gridy++;
 		axesTab.add(buttons, cons);
 
+		// separator /////////////////////////////
+
+		cons.gridy++;
+		axesTab.add(new JSeparator(), cons);
+
+		// W axis ////////////////////////////////
+
+		buttons = new Panel();
+		buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
+
+		wAxisExists = new Checkbox(MSG_WNAME, false);
+		connectedOnly.add(wAxisExists);
+		stoppedOnly.add(wAxisExists);
+		buttons.add(wAxisExists);
+
+		wAxisInverted = new Checkbox(MSG_AXISINVERTED, false);
+		connectedOnly.add(wAxisInverted);
+		stoppedOnly.add(wAxisInverted);
+		buttons.add(wAxisInverted);
+
+		wAxisZeroUp = new Checkbox(MSG_AXISZEROUP, false);
+		connectedOnly.add(wAxisZeroUp);
+		stoppedOnly.add(wAxisZeroUp);
+		buttons.add(wAxisZeroUp);
+
+		wAxisBacklash = new JTextField("0", 4);
+		connectedOnly.add(wAxisBacklash);
+		stoppedOnly.add(wAxisBacklash);
+		buttons.add(new JLabel(MSG_BACKLASH));
+		buttons.add(wAxisBacklash);
+		buttons.add(new JLabel(MSG_UNITLABEL2));
+
+		cons.gridy++;
+		axesTab.add(buttons, cons);
+
+		////////////////////////////////
+
+		buttons = new Panel();
+		buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
+
+		vAxisRecalc = new JTextField("200", 3);
+		connectedOnly.add(vAxisRecalc);
+		stoppedOnly.add(vAxisRecalc);
+		buttons.add(vAxisRecalc);
+		buttons.add(new JLabel(MSG_RECALCLABEL2+" "));
+
+		vAxisFrom = new JTextField("", 6);
+		connectedOnly.add(vAxisFrom);
+		stoppedOnly.add(vAxisFrom);
+		buttons.add(new JLabel(MSG_AXISFROM+" "));
+		buttons.add(vAxisFrom);
+
+		vAxisTo = new JTextField("", 6);
+		connectedOnly.add(vAxisTo);
+		stoppedOnly.add(vAxisTo);
+		buttons.add(new JLabel(MSG_AXISTO+" "));
+		buttons.add(vAxisTo);
+		buttons.add(new JLabel(MSG_UNITLABEL2));
+
+		cons.gridy++;
+		axesTab.add(buttons, cons);
+
+
 		//////////////////////////////////////////
 
 		tabs.add(MSG_TAB_AXES, axesTab);
@@ -803,6 +866,34 @@ public class GilosGUI extends Frame
 		cons.gridx++;
 		manualTab.add(vRunButton, cons);
 
+		// W /////////////////////////////////////
+
+		cons.gridy++;
+		cons.gridx = 0;
+		manualTab.add(new JLabel(MSG_WNAME+" "), cons);
+
+		positionV = new JLabel("?", SwingConstants.RIGHT);
+		positionV.setSize(30, 200);
+		cons.gridx++;
+		manualTab.add(positionV, cons);
+
+		cons.gridx++;
+		manualTab.add(new JLabel(" "+MSG_UNITLABEL2), cons);
+
+		manualW = new JTextField("0", 6);
+		cons.gridx++;
+		manualTab.add(manualW, cons);
+
+		wRunButton = new JButton(MSG_BUTTON_MANUALRUN);
+		wRunButton.addActionListener(controller);
+		wRunButton.setActionCommand(controller.COMMAND_MANUALRUN_V);
+		connectedOnly.add(wRunButton);
+		stoppedOnly.add(wRunButton);
+		cons.gridx++;
+		manualTab.add(new JLabel(" "), cons);
+		cons.gridx++;
+		manualTab.add(wRunButton, cons);
+
 		// numerical run button //////////////////
 
 		cons.gridy = 2;
@@ -815,7 +906,7 @@ public class GilosGUI extends Frame
 		connectedOnly.add(manualRunButton);
 		stoppedOnly.add(manualRunButton);
 		cons.gridx++;
-		cons.gridheight = 5;
+		cons.gridheight = 6;
 		cons.fill = GridBagConstraints.BOTH;
 		manualTab.add(manualRunButton, cons);
 		cons.gridheight = 1;
@@ -872,6 +963,14 @@ public class GilosGUI extends Frame
 						if(!machineConf.v.exists())break;
 						controller.keyboardMove(4, +1);
 						break;
+					case KeyEvent.VK_PAGE_DOWN:
+						if(!machineConf.w.exists())break;
+						controller.keyboardMove(5, -1);
+						break;
+					case KeyEvent.VK_PAGE_UP:
+						if(!machineConf.w.exists())break;
+						controller.keyboardMove(5, +1);
+						break;
 				}
 			}
 			public synchronized void keyTyped(KeyEvent ev){
@@ -892,13 +991,15 @@ public class GilosGUI extends Frame
 					case KeyEvent.VK_RIGHT:
 					case KeyEvent.VK_DOWN:
 					case KeyEvent.VK_UP:
+					case KeyEvent.VK_PAGE_DOWN:
+					case KeyEvent.VK_PAGE_UP:
 						controller.keyboardStop();
 				}
 			}
 		});
 
 		cons.gridx = 0;
-		cons.gridy = 6;
+		cons.gridy = 7;
 		manualTab.add(new JLabel(" "), cons); // spacer
 		cons.gridx = 0;
 		cons.gridy++;
@@ -1018,13 +1119,17 @@ public class GilosGUI extends Frame
 			case KeyEvent.VK_NUMPAD3:
 				return "NUMPAD 3";
 			case KeyEvent.VK_LEFT:
-				return "LEFT";
+				return "ARROW LEFT";
 			case KeyEvent.VK_RIGHT:
-				return "RIGHT";
+				return "ARROW IGHT";
 			case KeyEvent.VK_DOWN:
-				return "DOWN";
+				return "ARROW DOWN";
 			case KeyEvent.VK_UP:
-				return "UP";
+				return "ARROW UP";
+			case KeyEvent.VK_PAGE_DOWN:
+				return "PAGE DOWN";
+			case KeyEvent.VK_PAGE_UP:
+				return "PAGE UP";
 			default:
 				return "<"+keyCode+">";
 		}
@@ -1110,7 +1215,15 @@ public class GilosGUI extends Frame
 				string2MaybeNumber(vAxisTo.getText()),
 				parseDouble(vAxisBacklash.getText())
 			),
-			new AxisConfig(),
+			new AxisConfig(
+				wAxisExists.getState(),
+				parseDouble(vAxisRecalc.getText()),
+				wAxisInverted.getState(),
+				wAxisZeroUp.getState(),
+				string2MaybeNumber(vAxisFrom.getText()),
+				string2MaybeNumber(vAxisTo.getText()),
+				parseDouble(wAxisBacklash.getText())
+			),
 			getStepRate()
 		);
 
@@ -1186,6 +1299,14 @@ public class GilosGUI extends Frame
 		vAxisFrom.setText(maybeNumber2String(mc.v.lowLimit()));
 		vAxisTo.setText(maybeNumber2String(mc.v.highLimit()));
 		vAxisBacklash.setText(""+mc.v.backlash());
+
+		wAxisExists.setState(mc.w.exists());
+		vAxisRecalc.setText(roundIfPossible(mc.w.stepsPerMm()));
+		wAxisInverted.setState(mc.w.inverted());
+		wAxisZeroUp.setState(mc.w.zeroUp());
+		vAxisFrom.setText(maybeNumber2String(mc.w.lowLimit()));
+		vAxisTo.setText(maybeNumber2String(mc.w.highLimit()));
+		wAxisBacklash.setText(""+mc.w.backlash());
 
 		defaultSpeed.setText(""+mc.stepsPerSecond);
 
@@ -1383,7 +1504,7 @@ public class GilosGUI extends Frame
 			zRunButton.setEnabled(machineConf.z.exists());
 			uRunButton.setEnabled(machineConf.u.exists());
 			vRunButton.setEnabled(machineConf.v.exists());
-//			wRunButton.setEnabled(machineConf.w.exists());
+			wRunButton.setEnabled(machineConf.w.exists());
 		}
 		if(zoom != null){
 			boolean loadFileEnabled = !waitForFileToolPathEnd;
@@ -1508,7 +1629,7 @@ public class GilosGUI extends Frame
 		if(zAxisExists.getState())signature = signature+"Z";
 		if(uAxisExists.getState())signature = signature+"U";
 		if(vAxisExists.getState())signature = signature+"V";
-//		if(wAxisExists.getState())signature = signature+"W";
+		if(wAxisExists.getState())signature = signature+"W";
 		return signature;
 	}
 
