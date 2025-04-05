@@ -834,6 +834,7 @@ public class GilosDriver implements Runnable {
 							write("o");
 						}
 						else debugPrintln("driver.processCommand READY: CHUCK_OPEN not supported by firmware");
+						controller.updateChuck(true);
 						return true;
 
 					case CHUCK_CLOSE:
@@ -842,6 +843,7 @@ public class GilosDriver implements Runnable {
 							write("c");
 						}
 						else debugPrintln("driver.processCommand READY: CHUCK_CLOSE not supported by firmware");
+						controller.updateChuck(false);
 						return true;
 
 					case NO_COMMAND:
@@ -963,12 +965,12 @@ public class GilosDriver implements Runnable {
 		commandBuffer.add(Command.TEST_LIMITS);
 	}
 
-	public synchronized void chuckOpen(){
+	public synchronized void openChuck(){
 		if(!isConnected())return;
 		commandBuffer.add(Command.CHUCK_OPEN);
 	}
 
-	public synchronized void chuckClose(){
+	public synchronized void closeChuck(){
 		if(!isConnected())return;
 		commandBuffer.add(Command.CHUCK_CLOSE);
 	}

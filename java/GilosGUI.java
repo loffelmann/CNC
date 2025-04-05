@@ -72,6 +72,8 @@ public class GilosGUI extends Frame
 	public static final String MSG_NOLIMITS = "(nehlídá limity)";
 	public static final String MSG_BUTTON_UP = "nahoru";
 	public static final String MSG_BUTTON_DOWN = "dolů";
+	public static final String MSG_BUTTON_OPENCHUCK = "otevřít kleštinu";
+	public static final String MSG_BUTTON_CLOSECHUCK = "zavřít kleštinu";
 
 	// status bar messages - čeština
 	public static final String MSG_FILE_BADEXT = "Neznámý typ souboru: %s";
@@ -104,6 +106,7 @@ public class GilosGUI extends Frame
 	private Label portLabel;
 	private Button startButton;
 	private JButton loadFileButton;
+	private JButton chuckButton1, chuckButton2;
 	private Label statusBar;
 	private JLabel positionX, positionY, positionZ, positionU, positionV, positionW;
 	private JLabel xRecalcLabel, yRecalcLabel, zRecalcLabel;
@@ -1017,6 +1020,21 @@ public class GilosGUI extends Frame
 		manualTab.add(new JLabel(MSG_NOLIMITS), cons);
 		cons.gridwidth = 1;
 
+		// chuck control /////////////////////////
+
+		cons.gridx = 0;
+		cons.gridy++;
+		manualTab.add(new JLabel(" "), cons); // spacer
+
+		cons.gridy++;
+		cons.gridwidth = 8;
+		chuckButton1 = new JButton(MSG_BUTTON_OPENCHUCK);
+		chuckButton1.setActionCommand(controller.COMMAND_OPENCHUCK);
+		chuckButton1.addActionListener(controller);
+		connectedOnly.add(chuckButton1);
+		manualTab.add(chuckButton1, cons);
+		cons.gridwidth = 1;
+
 		tabs.add(MSG_TAB_MANUAL, manualTab);
 
 		// movement buttons for touch screen ///////////////////////////////////
@@ -1136,6 +1154,18 @@ public class GilosGUI extends Frame
 		cons.gridx = 5;
 		tabletTab.add(downButton, cons);
 
+		// chuck button
+
+		chuckButton2 = new JButton(MSG_BUTTON_OPENCHUCK);
+		chuckButton2.setActionCommand(controller.COMMAND_OPENCHUCK);
+		chuckButton2.addActionListener(controller);
+		connectedOnly.add(chuckButton2);
+		cons.gridy = 7;
+		cons.gridwidth = 5;
+		cons.gridx = 1;
+		tabletTab.add(chuckButton2, cons);
+		cons.gridwidth = 1;
+
 		// separators
 
 		cons.weightx = cons.weighty = 0.1;
@@ -1147,6 +1177,9 @@ public class GilosGUI extends Frame
 		tabletTab.add(new Panel(), cons);
 		cons.gridx = 4;
 		cons.gridy = 6;
+		tabletTab.add(new Panel(), cons);
+		cons.gridx = 6;
+		cons.gridy = 8;
 		tabletTab.add(new Panel(), cons);
 		cons.weightx = cons.weighty = 1;
 
@@ -1600,6 +1633,13 @@ public class GilosGUI extends Frame
 		canvas.enabled = true;
 		startButton.setLabel(MSG_BUTTON_START);
 		portLabel.setText(connected? portName : MSG_NOTCONNECTED);
+	}
+
+	public void setChuck(boolean open){
+		chuckButton1.setText(open? MSG_BUTTON_CLOSECHUCK : MSG_BUTTON_OPENCHUCK);
+		chuckButton1.setActionCommand(open? controller.COMMAND_CLOSECHUCK : controller.COMMAND_OPENCHUCK);
+		chuckButton2.setText(open? MSG_BUTTON_CLOSECHUCK : MSG_BUTTON_OPENCHUCK);
+		chuckButton2.setActionCommand(open? controller.COMMAND_CLOSECHUCK : controller.COMMAND_OPENCHUCK);
 	}
 
 	private String toolPathId = null;
