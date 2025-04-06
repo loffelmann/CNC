@@ -1086,7 +1086,6 @@ public class GilosGUI extends Frame
 		upButton.setActionCommand(controller.COMMAND_INTRUN_X_UP);
 		upButton.getModel().addChangeListener(this);
 		connectedOnly.add(upButton);
-		stoppedOnly.add(upButton);
 		cons.gridy = 1;
 		cons.gridx = 1;
 		tabletTab.add(upButton, cons);
@@ -1095,7 +1094,6 @@ public class GilosGUI extends Frame
 		downButton.setActionCommand(controller.COMMAND_INTRUN_X_DOWN);
 		downButton.getModel().addChangeListener(this);
 		connectedOnly.add(downButton);
-		stoppedOnly.add(downButton);
 		cons.gridy = 2;
 		cons.gridx = 1;
 		tabletTab.add(downButton, cons);
@@ -1104,7 +1102,6 @@ public class GilosGUI extends Frame
 		upButton.setActionCommand(controller.COMMAND_INTRUN_Y_UP);
 		upButton.getModel().addChangeListener(this);
 		connectedOnly.add(upButton);
-		stoppedOnly.add(upButton);
 		cons.gridy = 1;
 		cons.gridx = 3;
 		tabletTab.add(upButton, cons);
@@ -1113,7 +1110,6 @@ public class GilosGUI extends Frame
 		downButton.setActionCommand(controller.COMMAND_INTRUN_Y_DOWN);
 		downButton.getModel().addChangeListener(this);
 		connectedOnly.add(downButton);
-		stoppedOnly.add(downButton);
 		cons.gridy = 2;
 		cons.gridx = 3;
 		tabletTab.add(downButton, cons);
@@ -1122,7 +1118,6 @@ public class GilosGUI extends Frame
 		upButton.setActionCommand(controller.COMMAND_INTRUN_Z_UP);
 		upButton.getModel().addChangeListener(this);
 		connectedOnly.add(upButton);
-		stoppedOnly.add(upButton);
 		cons.gridy = 1;
 		cons.gridx = 5;
 		tabletTab.add(upButton, cons);
@@ -1131,7 +1126,6 @@ public class GilosGUI extends Frame
 		downButton.setActionCommand(controller.COMMAND_INTRUN_Z_DOWN);
 		downButton.getModel().addChangeListener(this);
 		connectedOnly.add(downButton);
-		stoppedOnly.add(downButton);
 		cons.gridy = 2;
 		cons.gridx = 5;
 		tabletTab.add(downButton, cons);
@@ -1140,7 +1134,6 @@ public class GilosGUI extends Frame
 		upButton.setActionCommand(controller.COMMAND_INTRUN_U_UP);
 		upButton.getModel().addChangeListener(this);
 		connectedOnly.add(upButton);
-		stoppedOnly.add(upButton);
 		cons.gridy = 4;
 		cons.gridx = 1;
 		tabletTab.add(upButton, cons);
@@ -1149,7 +1142,6 @@ public class GilosGUI extends Frame
 		downButton.setActionCommand(controller.COMMAND_INTRUN_U_DOWN);
 		downButton.getModel().addChangeListener(this);
 		connectedOnly.add(downButton);
-		stoppedOnly.add(downButton);
 		cons.gridy = 5;
 		cons.gridx = 1;
 		tabletTab.add(downButton, cons);
@@ -1158,7 +1150,6 @@ public class GilosGUI extends Frame
 		upButton.setActionCommand(controller.COMMAND_INTRUN_V_UP);
 		upButton.getModel().addChangeListener(this);
 		connectedOnly.add(upButton);
-		stoppedOnly.add(upButton);
 		cons.gridy = 4;
 		cons.gridx = 3;
 		tabletTab.add(upButton, cons);
@@ -1167,7 +1158,6 @@ public class GilosGUI extends Frame
 		downButton.setActionCommand(controller.COMMAND_INTRUN_V_DOWN);
 		downButton.getModel().addChangeListener(this);
 		connectedOnly.add(downButton);
-		stoppedOnly.add(downButton);
 		cons.gridy = 5;
 		cons.gridx = 3;
 		tabletTab.add(downButton, cons);
@@ -1176,7 +1166,6 @@ public class GilosGUI extends Frame
 		upButton.setActionCommand(controller.COMMAND_INTRUN_W_UP);
 		upButton.getModel().addChangeListener(this);
 		connectedOnly.add(upButton);
-		stoppedOnly.add(upButton);
 		cons.gridy = 4;
 		cons.gridx = 5;
 		tabletTab.add(upButton, cons);
@@ -1185,7 +1174,6 @@ public class GilosGUI extends Frame
 		downButton.setActionCommand(controller.COMMAND_INTRUN_W_DOWN);
 		downButton.getModel().addChangeListener(this);
 		connectedOnly.add(downButton);
-		stoppedOnly.add(downButton);
 		cons.gridy = 5;
 		cons.gridx = 5;
 		tabletTab.add(downButton, cons);
@@ -1989,13 +1977,13 @@ public class GilosGUI extends Frame
 		Object source = ev.getSource();
 		if(source instanceof ButtonModel){ // touchscreen buttons
 			ButtonModel model = (ButtonModel) source;
-			if(model.isArmed() && !touchButtonActive){
-				this.touchButtonMove(model.getActionCommand());
+			if(model.isArmed() && !touchButtonActive && !running){
 				touchButtonActive = true;
+				this.touchButtonMove(model.getActionCommand());
 			}
-			if(!model.isArmed() && touchButtonActive){
-				controller.interactiveStop();
+			else if(!model.isArmed() && touchButtonActive){
 				touchButtonActive = false;
+				controller.interactiveStop();
 			}
 		}
 		else{
