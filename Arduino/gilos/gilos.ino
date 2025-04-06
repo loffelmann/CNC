@@ -7,6 +7,11 @@ const byte firmwareVersion = 7;
 
 /// Settings ///////////////////////////////////////////////////////////////////////////////////////
 
+#define BOARD_UNO_1 1
+#define BOARD_MEGA_1 2
+
+#define BOARD BOARD_MEGA_1
+
 // speed etc. constants
 
 #define LOW_SPEED 32u
@@ -28,32 +33,77 @@ const byte firmwareVersion = 7;
 
 // pinout
 
-#define STEP_X 4
-#define STEP_Y 6
-#define STEP_Z 8
-#define STEP_U 10
-#define STEP_V 12
-#define STEP_W -1
+#if BOARD == BOARD_UNO_1
 
-#define DIR_X 3
-#define DIR_Y 5
-#define DIR_Z 7
-#define DIR_U 9
-#define DIR_V 11
-#define DIR_W -1
+  #define STEP_X 4
+  #define STEP_Y 6
+  #define STEP_Z 8
+  #define STEP_U 10
+  #define STEP_V 12
+  #define STEP_W -1
 
-#define LIMIT_X A4
-#define LIMIT_Y A3
-#define LIMIT_Z A2
-#define LIMIT_U A1
-#define LIMIT_V A0
-#define LIMIT_W -1
+  #define DIR_X 3
+  #define DIR_Y 5
+  #define DIR_Z 7
+  #define DIR_U 9
+  #define DIR_V 11
+  #define DIR_W -1
 
-#define CHUCK -1
+  #define LIMIT_X A4
+  #define LIMIT_Y A3
+  #define LIMIT_Z A2
+  #define LIMIT_U A1
+  #define LIMIT_V A0
+  #define LIMIT_W -1
+  #define LIMIT_TOOL -1
 
-#define SPINDLE_SPEED -1
+  #define CHUCK -1
 
-#define ALARM 2
+  #define SPINDLE_SPEED -1
+  #define SPINDLE_DISABLE -1
+
+  #define ALARM_CRASH -1
+  #define ALARM_MOTOR 2
+
+  #define LED_GREEN LED_BUILTIN
+  #define LED_RED -1
+
+#elif BOARD == BOARD_MEGA_1
+
+  #define STEP_X 53
+  #define STEP_Y 49
+  #define STEP_Z 45
+  #define STEP_U 37
+  #define STEP_V 29
+  #define STEP_W 25
+
+  #define DIR_X 51
+  #define DIR_Y 47
+  #define DIR_Z 43
+  #define DIR_U 35
+  #define DIR_V 27
+  #define DIR_W 23
+
+  #define LIMIT_X 68
+  #define LIMIT_Y 61
+  #define LIMIT_Z 60
+  #define LIMIT_U 58
+  #define LIMIT_V 55
+  #define LIMIT_W 54
+  #define LIMIT_TOOL 69
+
+  #define CHUCK 17
+
+  #define SPINDLE_SPEED 2
+  #define SPINDLE_DISABLE 9
+
+  #define ALARM_CRASH 19
+  #define ALARM_MOTOR 20
+
+  #define LED_GREEN 15
+  #define LED_RED 16
+
+#endif
 
 
 
@@ -380,8 +430,11 @@ void handleSerial(){
           moving = false;
           stopAtLimits = false;
           bresenhamIter = 0;
-#ifdef SUPPORT_SPINDLE_SPEED
+#if SPINDLE_SPEED >= 0
           analogWrite(SPINDLE_SPEED, 0);
+#endif
+#if SPINDLE_DISABLE >= 0
+          analogWrite(SPINDLE_DISABLE, 0);
 #endif
           delay(5);
         }
@@ -410,7 +463,7 @@ void handleSerial(){
               (moving << 0)
             | (stopping << 1)
             | (stopAtLimits << 2)
-#ifdef SUPPORT_CHUCK
+#if CHUCK >= 0
             | (digitalRead(CHUCK) << 3)
 #endif
           ));
@@ -470,10 +523,21 @@ void handleSerial(){
         }
         else if(data == 'l'){ // blink led
           stop();
+            digitalWrite(LED_GREEN, HIGH);
+#if LED_RED >= 0
+            digitalWrite(LED_RED, LOW);
+#endif
           for(int i=0; i<10; i++){
             delay(500);
-            digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+            digitalWrite(LED_GREEN, !digitalRead(LED_GREEN));
+#if LED_RED >= 0
+            digitalWrite(LED_RED, !digitalRead(LED_RED));
+#endif
           }
+            digitalWrite(LED_GREEN, LOW);
+#if LED_RED >= 0
+            digitalWrite(LED_RED, LOW);
+#endif
           Serial.write('l');
         }
         else if(data == 'L'){ // test limits
@@ -746,7 +810,7 @@ void handleSerial(){
 
       case S_TEST_LIMITS:
         if(data == 'R' || data == '.'){ // reset
-          digitalWrite(LED_BUILTIN, LOW);
+          digitalWrite(LED_GREEN, LOW);
           serialPhase = S_READY;
         }
         break;
@@ -828,28 +892,35 @@ void handleSerial(){
 byte readLimits(){
   byte limit = 0;
 
-//  if(analogRead(LIMIT_X) >= LIMIT_THRESHOLD)limit |= 0b000001;
-//  if(analogRead(LIMIT_Y) >= LIMIT_THRESHOLD)limit |= 0b000010;
-//  if(analogRead(LIMIT_Z) >= LIMIT_THRESHOLD)limit |= 0b000100;
-//  if(analogRead(LIMIT_U) >= LIMIT_THRESHOLD)limit |= 0b001000;
-//  if(analogRead(LIMIT_V) >= LIMIT_THRESHOLD)limit |= 0b010000;
-//#ifdef SUPPORT_W
-//  if(analogRead(LIMIT_W) >= LIMIT_THRESHOLD)limit |= 0b100000;
+//  if(analogRead(LIMIT_X) >= LIMIT_THRESHOLD)limit |= 0b0000001;
+//  if(analogRead(LIMIT_Y) >= LIMIT_THRESHOLD)limit |= 0b0000010;
+//  if(analogRead(LIMIT_Z) >= LIMIT_THRESHOLD)limit |= 0b0000100;
+//  if(analogRead(LIMIT_U) >= LIMIT_THRESHOLD)limit |= 0b0001000;
+//  if(analogRead(LIMIT_V) >= LIMIT_THRESHOLD)limit |= 0b0010000;
+//#if STEP_W >= 0
+//  if(analogRead(LIMIT_W) >= LIMIT_THRESHOLD)limit |= 0b0100000;
+//#endif
+//#if LIMIT_TOOL >= 0
+//  if(analogRead(LIMIT_TOOTOOL) >= LIMIT_THRESHOLD)limit |= 0b1000000;
 //#endif
 
   digitalRead(LIMIT_X);
-  if(digitalRead(LIMIT_X))limit |= 0b000001;
+  if(digitalRead(LIMIT_X))limit |= 0b0000001;
   digitalRead(LIMIT_Y);
-  if(digitalRead(LIMIT_Y))limit |= 0b000010;
+  if(digitalRead(LIMIT_Y))limit |= 0b0000010;
   digitalRead(LIMIT_Z);
-  if(digitalRead(LIMIT_Z))limit |= 0b000100;
+  if(digitalRead(LIMIT_Z))limit |= 0b0000100;
   digitalRead(LIMIT_U);
-  if(digitalRead(LIMIT_U))limit |= 0b001000;
+  if(digitalRead(LIMIT_U))limit |= 0b0001000;
   digitalRead(LIMIT_V);
-  if(digitalRead(LIMIT_V))limit |= 0b010000;
-#ifdef SUPPORT_W
+  if(digitalRead(LIMIT_V))limit |= 0b0010000;
+#if STEP_W >= 0
   digitalRead(LIMIT_W);
-  if(digitalRead(LIMIT_W))limit |= 0b100000;
+  if(digitalRead(LIMIT_W))limit |= 0b0100000;
+#endif
+#if LIMIT_TOOL >= 0
+  digitalRead(LIMIT_TOOL);
+  if(digitalRead(LIMIT_TOOL))limit |= 0b1000000;
 #endif
 
   return limit;
@@ -868,12 +939,12 @@ bool step(int x, int y, int z, int u, int v, int w){
 
   if(stopAtLimits){
     byte limits = readLimits();
-    if(limits & 0b000001)x = 0;
-    if(limits & 0b000010)y = 0;
-    if(limits & 0b000100)z = 0;
-    if(limits & 0b001000)u = 0;
-    if(limits & 0b010000)v = 0;
-    if(limits & 0b100000)w = 0;
+    if(limits & 0b0000001)x = 0;
+    if(limits & 0b0000010)y = 0;
+    if(limits & 0b0000100)z = 0;
+    if(limits & 0b0001000)u = 0;
+    if(limits & 0b0010000)v = 0;
+    if(limits & 0b0100000)w = 0;
   }
 
   bool moved = (x!=0) || (y!=0) || (z!=0) || (u!=0) || (v!=0) || (w!=0);
@@ -914,7 +985,7 @@ bool step(int x, int y, int z, int u, int v, int w){
     digitalWrite(DIR_Z, (directionZ==-1)? LOW : HIGH);
     digitalWrite(DIR_U, (directionU==-1)? LOW : HIGH);
     digitalWrite(DIR_V, (directionV==-1)? LOW : HIGH);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
     digitalWrite(DIR_W, (directionW==-1)? LOW : HIGH);
 #endif
     delayMicroseconds(20);
@@ -924,7 +995,7 @@ bool step(int x, int y, int z, int u, int v, int w){
       digitalWrite(STEP_Z, (changeZ && i<zBacklash)? HIGH : LOW);
       digitalWrite(STEP_U, (changeU && i<uBacklash)? HIGH : LOW);
       digitalWrite(STEP_V, (changeV && i<vBacklash)? HIGH : LOW);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
       digitalWrite(STEP_W, (changeW && i<wBacklash)? HIGH : LOW);
 #endif
       delayMicroseconds(20);
@@ -933,7 +1004,7 @@ bool step(int x, int y, int z, int u, int v, int w){
       digitalWrite(STEP_Z, LOW);
       digitalWrite(STEP_U, LOW);
       digitalWrite(STEP_V, LOW);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
       digitalWrite(STEP_W, LOW);
 #endif
       unsigned long remainingTime = 1000000L / BACKLASH_SPEED;
@@ -952,7 +1023,7 @@ bool step(int x, int y, int z, int u, int v, int w){
   digitalWrite(STEP_Z, z? HIGH : LOW);
   digitalWrite(STEP_U, u? HIGH : LOW);
   digitalWrite(STEP_V, v? HIGH : LOW);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   digitalWrite(STEP_W, w? HIGH : LOW);
 #endif
 //  delayMicroseconds(20);
@@ -974,7 +1045,7 @@ bool step(int x, int y, int z, int u, int v, int w){
   digitalWrite(STEP_Z, LOW);
   digitalWrite(STEP_U, LOW);
   digitalWrite(STEP_V, LOW);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   digitalWrite(STEP_W, LOW);
 #endif
 //  delayMicroseconds(20);
@@ -1094,7 +1165,7 @@ void bresenham(
     else if(remainingTime > 0){
       delayMicroseconds(remainingTime);
     }
-//    digitalWrite(LED_BUILTIN, (remainingTime>0)? HIGH : LOW); // debug, measuring maximum step rate
+//    digitalWrite(LED_GREEN, (remainingTime>0)? HIGH : LOW); // debug, measuring maximum step rate
   }
   bresenhamIter = 0;
 }
@@ -1167,12 +1238,13 @@ void printDebugLimitStatus(){
   byte limits = readLimits();
   Serial.print("dL");
   Serial.write((byte)(64
-    | ((!xAxisPresent || (limits & 0b000001)) << 0)
-    | ((!yAxisPresent || (limits & 0b000010)) << 1)
-    | ((!zAxisPresent || (limits & 0b000100)) << 2)
-    | ((!uAxisPresent || (limits & 0b001000)) << 3)
-    | ((!vAxisPresent || (limits & 0b010000)) << 4)
-    | ((!wAxisPresent || (limits & 0b100000)) << 5)
+    | ((!xAxisPresent || (limits & 0b0000001)) << 0)
+    | ((!yAxisPresent || (limits & 0b0000010)) << 1)
+    | ((!zAxisPresent || (limits & 0b0000100)) << 2)
+    | ((!uAxisPresent || (limits & 0b0001000)) << 3)
+    | ((!vAxisPresent || (limits & 0b0010000)) << 4)
+    | ((!wAxisPresent || (limits & 0b0100000)) << 5)
+    | ((                 (limits & 0b1000000)) << 6)
   ));
 }
 void printDebugStepCount(){
@@ -1189,12 +1261,12 @@ void printDebugStepCount(){
 // axis homing
 bool goTowardZero(){
   byte limits = readLimits();
-  if(   (!xAxisPresent || (limits & 0b000001))
-     && (!yAxisPresent || (limits & 0b000010))
-     && (!zAxisPresent || (limits & 0b000100))
-     && (!uAxisPresent || (limits & 0b001000))
-     && (!vAxisPresent || (limits & 0b010000))
-     && (!wAxisPresent || (limits & 0b100000))
+  if(   (!xAxisPresent || (limits & 0b0000001))
+     && (!yAxisPresent || (limits & 0b0000010))
+     && (!zAxisPresent || (limits & 0b0000100))
+     && (!uAxisPresent || (limits & 0b0001000))
+     && (!vAxisPresent || (limits & 0b0010000))
+     && (!wAxisPresent || (limits & 0b0100000))
   ){ // all limits reached
 //    Serial.print("d1"); printDebugMovingStatus();
 //    printDebugLimitStatus();
@@ -1260,19 +1332,19 @@ bool goTowardZero(){
 }
 
 void chuckOpen(){
-#ifdef SUPPORT_CHUCK
+#if CHUCK >= 0
   digitalWrite(CHUCK, HIGH);
 #endif
 }
 
 void chuckClose(){
-#ifdef SUPPORT_CHUCK
+#if CHUCK >= 0
   digitalWrite(CHUCK, LOW);
 #endif
 }
 
 void setSpindleSpeed(int pwm){
-#ifdef SUPPORT_SPINDLE_SPEED
+#if SPINDLE_SPEED >= 0
   analogWrite(SPINDLE_SPEED, pwm & 0xFF);
 #endif
 }
@@ -1282,14 +1354,17 @@ void setSpindleSpeed(int pwm){
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup(){
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_GREEN, OUTPUT);
+#if LED_RED >= 0
+  pinMode(LED_RED, OUTPUT);
+#endif
 
   pinMode(STEP_X, OUTPUT);
   pinMode(STEP_Y, OUTPUT);
   pinMode(STEP_Z, OUTPUT);
   pinMode(STEP_U, OUTPUT);
   pinMode(STEP_V, OUTPUT);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   pinMode(STEP_W, OUTPUT);
 #endif
 
@@ -1298,7 +1373,7 @@ void setup(){
   pinMode(DIR_Z, OUTPUT);
   pinMode(DIR_U, OUTPUT);
   pinMode(DIR_V, OUTPUT);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   pinMode(DIR_W, OUTPUT);
 #endif
 
@@ -1307,28 +1382,36 @@ void setup(){
   pinMode(LIMIT_Z, INPUT);
   pinMode(LIMIT_U, INPUT);
   pinMode(LIMIT_V, INPUT);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   pinMode(LIMIT_W, INPUT);
 #endif
 
-#ifdef SUPPORT_CHUCK
+#if CHUCK >= 0
   pinMode(CHUCK, OUTPUT);
   digitalWrite(CHUCK, LOW);
 #endif
 
-#ifdef SUPPORT_SPINDLE_SPEED
+#if SPINDLE_SPEED >= 0
   pinMode(SPINDLE_SPEED, OUTPUT);
   analogWrite(SPINDLE_SPEED, 0);
 #endif
 
-  digitalWrite(LED_BUILTIN, LOW);
+#if SPINDLE_DISABLE >= 0
+  pinMode(SPINDLE_DISABLE, OUTPUT);
+  analogWrite(SPINDLE_DISABLE, 0);
+#endif
+
+  digitalWrite(LED_GREEN, LOW);
+#if LED_RED >= 0
+  digitalWrite(LED_RED, LOW);
+#endif
 
   digitalWrite(STEP_X, LOW);
   digitalWrite(STEP_Y, LOW);
   digitalWrite(STEP_Z, LOW);
   digitalWrite(STEP_U, LOW);
   digitalWrite(STEP_V, LOW);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   digitalWrite(STEP_W, LOW);
 #endif
 
@@ -1337,7 +1420,7 @@ void setup(){
   digitalWrite(DIR_Z, LOW);
   digitalWrite(DIR_U, LOW);
   digitalWrite(DIR_V, LOW);
-#ifdef SUPPORT_W
+#if STEP_W >= 0
   digitalWrite(DIR_W, LOW);
 #endif
 
@@ -1367,7 +1450,7 @@ void loop(){
     return;
   }
   if(serialPhase == S_TEST_LIMITS){ // testing homing sensors with LED
-    digitalWrite(LED_BUILTIN, readLimits()? HIGH : LOW);
+    digitalWrite(LED_GREEN, readLimits()? HIGH : LOW);
   }
 
   // doing a move
