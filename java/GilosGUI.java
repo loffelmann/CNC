@@ -1983,7 +1983,7 @@ public class GilosGUI extends Frame
 	}
 
 
-	// ChangeListener interface (used to detect tab switching)
+	// ChangeListener interface (used to detect tab switching and touch buttons)
 
 	public void stateChanged(ChangeEvent ev){
 		Object source = ev.getSource();

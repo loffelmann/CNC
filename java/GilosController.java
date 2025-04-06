@@ -175,6 +175,8 @@ public class GilosController implements ActionListener {
 	 */
 	public synchronized void interactiveMove(int axis, int direction){
 		if(gilos.manualReady()){
+			if(running)updateAxes();
+			else if(!updateAxes())return;
 			if((axis == 0 && !machineConf.x.exists())
 			|| (axis == 1 && !machineConf.y.exists())
 			|| (axis == 2 && !machineConf.z.exists())
@@ -185,9 +187,6 @@ public class GilosController implements ActionListener {
 				return;
 			}
 			System.out.println("adding interactive move");
-			if(!running){
-				if(!updateAxes())return;
-			}
 			updateRunning(true, gui.MODE_RUN);
 			gilos.manualMove(
 				(axis == 0)? direction*16000 : 0,

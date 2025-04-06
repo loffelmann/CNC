@@ -137,7 +137,7 @@ public class GilosDriver implements Runnable {
 			)continue;
 
 			try{
-				Thread.sleep(3000); // Arduino may be restarting
+				Thread.sleep(10000); // Arduino may be restarting
 			}
 			catch(InterruptedException e){}
 
@@ -855,6 +855,8 @@ public class GilosDriver implements Runnable {
 						}
 						else debugPrintln("driver.processCommand READY: CHUCK_OPEN not supported by firmware");
 						controller.updateChuck(true);
+						popCommand(command);
+						debugPrintln("processCommand return 12");
 						return true;
 
 					case CHUCK_CLOSE:
@@ -864,6 +866,8 @@ public class GilosDriver implements Runnable {
 						}
 						else debugPrintln("driver.processCommand READY: CHUCK_CLOSE not supported by firmware");
 						controller.updateChuck(false);
+						popCommand(command);
+						debugPrintln("processCommand return 13");
 						return true;
 
 					case NO_COMMAND:
@@ -874,7 +878,7 @@ public class GilosDriver implements Runnable {
 					default:
 						System.err.println("Unknown command in READY mode");
 						popCommand(command);
-						debugPrintln("processCommand return 12");
+						debugPrintln("processCommand return 14");
 						return true;
 				}
 
@@ -894,6 +898,7 @@ public class GilosDriver implements Runnable {
 			case GOING_TO_ZERO:
 				switch(command){
 					case STOP:
+					case RESET:
 						debugPrintln("driver.processCommand GOING_TO_ZERO: STOP");
 						write(".");
 						state = State.READY;
@@ -933,7 +938,8 @@ public class GilosDriver implements Runnable {
 			case TESTING_LIMITS:
 				switch(command){
 					case STOP:
-						debugPrintln("driver.processCommand READY: STOP");
+					case RESET:
+						debugPrintln("driver.processCommand TEST_LIMITS: STOP");
 						write(".");
 						state = State.READY;
 						popCommand(command);
