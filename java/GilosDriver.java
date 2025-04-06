@@ -33,6 +33,9 @@ public class GilosDriver implements Runnable {
 	private static final long TIMEOUT_BLINK = 10000;
 	private static final long TIMEOUT_ZERO = 3600000;
 
+	private static final double SPINDLE_SPEED_COEF = 5.087;
+	private static final double SPINDLE_SPEED_OFFSET = 2.180;
+
 	// controller instance allowing two-way communication
 	private GilosController controller;
 
@@ -496,6 +499,7 @@ public class GilosDriver implements Runnable {
 		lastMoveManual = false;
 		numManualMoves = 0;
 		machineMoveBuffer = new ArrayList<Move>();
+		spindleSpeedBuffer = new ArrayList<Byte>();
 		remainingSteps = 0;
 		currentMove = zeroMove;
 		resetSequence();
@@ -533,9 +537,11 @@ public class GilosDriver implements Runnable {
 		TEST_LIMITS,
 		CHUCK_OPEN,
 		CHUCK_CLOSE,
+		SET_SPINDLE_SPEED,
 	};
 	private ArrayList<Command> commandBuffer;
 	private ArrayList<Move> moveBuffer;
+	private ArrayList<Byte> spindleSpeedBuffer;
 	private int numManualMoves;
 
 	/**
@@ -564,6 +570,10 @@ public class GilosDriver implements Runnable {
 		if(c == Command.SEND_MOVE){
 			moveBuffer.remove(0);
 			if(numManualMoves > 0)numManualMoves--;
+		}
+		else if(c == Command.SET_SPINDLE_SPEED){
+			spindleSpeedBuffer.remove(0);
+			check(c == commandBuffer.remove(0));
 		}
 		else if(c != Command.NO_COMMAND){
 			check(c == commandBuffer.remove(0));
@@ -744,6 +754,7 @@ public class GilosDriver implements Runnable {
 						commandBuffer = new ArrayList<Command>();
 						moveBuffer = new ArrayList<Move>();
 						machineMoveBuffer = new ArrayList<Move>();
+						spindleSpeedBuffer = new ArrayList<Byte>();
 						remainingSteps = 0;
 						currentMove = zeroMove;
 						moving = false;
@@ -800,6 +811,15 @@ public class GilosDriver implements Runnable {
 //						state = State.CHECKING_BUFFER;
 //						timeoutStart = System.currentTimeMillis();
 //						return true;
+
+					case SET_SPINDLE_SPEED:
+						debugPrintln("driver.processCommand READY: SET_SPINDLE_SPEED");
+						byte speed = spindleSpeedBuffer.get(0).byteValue();
+						debugPrintln("setting speed "+speed);
+						write("r");
+						write(speed);
+						popCommand(command);
+						return true;
 
 					case CHECK_BUFFER:
 						debugPrintln("driver.processCommand READY: CHECK_BUFFER");
@@ -973,6 +993,14 @@ public class GilosDriver implements Runnable {
 	public synchronized void closeChuck(){
 		if(!isConnected())return;
 		commandBuffer.add(Command.CHUCK_CLOSE);
+	}
+
+	public synchronized void setSpindleSpeed(double krpm){
+		if(!isConnected())return;
+		double speedValue = krpm*SPINDLE_SPEED_COEF + SPINDLE_SPEED_OFFSET;
+		byte speedCode = (byte)Math.round(Math.min(Math.max(speedValue, 0), 255));
+		spindleSpeedBuffer.add(speedCode);
+		commandBuffer.add(Command.SET_SPINDLE_SPEED);
 	}
 
 	/**

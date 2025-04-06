@@ -26,6 +26,7 @@ public class GilosController implements ActionListener {
 	public static final String COMMAND_TESTLIM = "test lim";
 	public static final String COMMAND_OPENCHUCK = "open chuck";
 	public static final String COMMAND_CLOSECHUCK = "close chuck";
+	public static final String COMMAND_SETSPINDLESPEED = "set spindle speed";
 	public static final String COMMAND_BACKSPACE = "backspace";
 	public static final String COMMAND_CLEAR = "clear";
 	public static final String COMMAND_KILL = "kill";
@@ -255,6 +256,10 @@ public class GilosController implements ActionListener {
 			case COMMAND_CLOSECHUCK:
 				// close chuck, grab tool
 				gilos.closeChuck();
+				break;
+
+			case COMMAND_SETSPINDLESPEED:
+				gilos.setSpindleSpeed(gui.getSpindleSpeed());
 				break;
 
 //			case COMMAND_SETAXES: // happens automatically now

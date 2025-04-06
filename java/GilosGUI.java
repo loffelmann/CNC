@@ -70,6 +70,8 @@ public class GilosGUI extends Frame
 	public static final String MSG_KEYBOARINPUT = "klávesnice";
 	public static final String MSG_MANUAL_LIMITS = "hlídat limity";
 	public static final String MSG_NOLIMITS = "(nehlídá limity)";
+	public static final String MSG_SPINDLESPEED = "kRPM";
+	public static final String MSG_BUTTON_SPINDLESPEED = "nastavit";
 	public static final String MSG_BUTTON_UP = "nahoru";
 	public static final String MSG_BUTTON_DOWN = "dolů";
 	public static final String MSG_BUTTON_OPENCHUCK = "otevřít kleštinu";
@@ -127,6 +129,7 @@ public class GilosGUI extends Frame
 	private JComboBox<String> manualMode;
 	private JCheckBox manualStopAtLimits;
 	private JButton xRunButton, yRunButton, zRunButton, uRunButton, vRunButton, wRunButton;
+	private JTextField spindleInput;
 
 	// Components enabled/disabled by state
 	private boolean connected = false;
@@ -720,9 +723,13 @@ public class GilosGUI extends Frame
 		cons = new GridBagConstraints();
 		cons.fill = GridBagConstraints.HORIZONTAL;
 
+		cons.gridx = 0;
+		cons.gridy = 0;
+		manualTab.add(new JLabel(" "), cons); // spacer
+
 		// settings //////////////////////////////
 
-		cons.gridy = 0;
+		cons.gridy++;
 
 		manualMode = new JComboBox<String>();
 		manualMode.addItem(MSG_MANUAL_RELATIVE);
@@ -910,7 +917,7 @@ public class GilosGUI extends Frame
 
 		// numerical run button //////////////////
 
-		cons.gridy = 2;
+		cons.gridy = 3;
 		cons.gridx++;
 		manualTab.add(new JLabel(" "), cons);
 
@@ -1001,7 +1008,7 @@ public class GilosGUI extends Frame
 		});
 
 		cons.gridx = 0;
-		cons.gridy = 7;
+		cons.gridy = 8;
 		manualTab.add(new JLabel(" "), cons); // spacer
 		cons.gridx = 0;
 		cons.gridy++;
@@ -1020,6 +1027,31 @@ public class GilosGUI extends Frame
 		manualTab.add(new JLabel(MSG_NOLIMITS), cons);
 		cons.gridwidth = 1;
 
+		// spindle speed control /////////////////
+
+		cons.gridx = 0;
+		cons.gridy++;
+		manualTab.add(new JLabel(" "), cons); // spacer
+
+		cons.gridy++;
+		cons.gridwidth = 3;
+		manualTab.add(new JLabel(MSG_SPINDLESPEED+" "), cons);
+
+		spindleInput = new JTextField("", 6);
+		connectedOnly.add(spindleInput);
+		cons.gridx = 3;
+		cons.gridwidth = 1;
+		manualTab.add(spindleInput, cons);
+
+		var spindleButton = new JButton(MSG_BUTTON_SPINDLESPEED);
+		spindleButton.setActionCommand(controller.COMMAND_SETSPINDLESPEED);
+		spindleButton.addActionListener(controller);
+		connectedOnly.add(spindleButton);
+		cons.gridx = 5;
+		cons.gridwidth = 3;
+		manualTab.add(spindleButton, cons);
+		cons.gridwidth = 1;
+
 		// chuck control /////////////////////////
 
 		cons.gridx = 0;
@@ -1034,6 +1066,10 @@ public class GilosGUI extends Frame
 		connectedOnly.add(chuckButton1);
 		manualTab.add(chuckButton1, cons);
 		cons.gridwidth = 1;
+
+		cons.gridx = 0;
+		cons.gridy++;
+		manualTab.add(new JLabel(" "), cons); // spacer
 
 		tabs.add(MSG_TAB_MANUAL, manualTab);
 
@@ -1640,6 +1676,10 @@ public class GilosGUI extends Frame
 		chuckButton1.setActionCommand(open? controller.COMMAND_CLOSECHUCK : controller.COMMAND_OPENCHUCK);
 		chuckButton2.setText(open? MSG_BUTTON_CLOSECHUCK : MSG_BUTTON_OPENCHUCK);
 		chuckButton2.setActionCommand(open? controller.COMMAND_CLOSECHUCK : controller.COMMAND_OPENCHUCK);
+	}
+
+	public double getSpindleSpeed(){
+		return parseDouble(spindleInput.getText());
 	}
 
 	private String toolPathId = null;
